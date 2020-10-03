@@ -1,44 +1,18 @@
 import numpy as np
+from harmonic import Harmonic
 import matplotlib.pyplot as plt
-from scipy.stats import skewnorm
 rng = np.random.RandomState()
-# np.seterr(all='raise')
 
 
 def f(x, a, h):
-    return a - h*x
-
-
-def skewgauss(n, relative_location=0, alpha=0):
-    ''' Generate a squew gaussian.
-
-        Args:
-            n: (int) timesteps
-            relative_location: (float) relative shifting of the
-                distribution [0, 1] (0.1 indicates a shifting toward
-                the beginning of the interval,0.9 indicates a shifting
-                toward its end)
-            alpha: (float) skewness
-
-        Example:
-            stime = 1500
-            plt.plot(stime, skewgauss(stime, location=0.6, alpha=4))
-    '''
-    location = 10*relative_location - 5
-    rng = np.array([-2, 2]) - location
-    x = np.linspace(rng[0], rng[1], n)
-    return skewnorm.pdf(x, alpha)
+    return a - h*x + np.pi/2
 
 
 # %%
 class GP:
     """ Generative process.
 
-    Implementation of the generative process from the paper:
-
-    Brown, H., Adams, R. A., Parees, I., Edwards, M., & Friston, K. (2013).
-    Active inference, sensory attenuation and illusions. Cognitive Processing,
-    14(4), 411–427. https://doi.org/10.1007/s10339-013-0571-3
+    Implementation of the generative process :
 
     Attributes:
         pi_s: (float) Precision of sensory states probabilities.
@@ -60,14 +34,16 @@ class GP:
 
         self.h = 1.0/4.0
 
-        self.mu_x = 0
+        self.mu_x = np.pi/2
         self.dmu_x = 0
-        self.mu_s = 0
+        self.mu_s = np.pi/2
 
         self.eta = 0.00025
 
         self.omega_s = np.exp(-self.pi_s)
         self.omega_x = np.exp(-self.pi_x)
+
+        self.oscil = Harmonic(amplitude=0.5*np.pi, freq=0.0005, h=0.001)
 
         self.a = 0
 
@@ -82,15 +58,14 @@ class GP:
         da = action_increment
         self.a += self.eta*da
 
-        self.mu_s = self.mu_x
-        self.dmu_x = f(self.x, self.a, self.h)
-
-    def generate(self):
-        """ Generate sensory states """
-
-        self.s = self.mu_s
-        self.dx = self.dmu_x
+        self.dmu_x = f(self.mu_x, 0.5*np.pi*np.tanh(self.a), self.h)
+        self.dx = self.dmu_x + self.omega_x*rng.randn()
         self.mu_x += self.eta*self.dx
+
+        self.oscil.amplitude = self.mu_x
+
+        self.oscil.update()
+        self.s = self.oscil.peak
 
 
 class GM:
@@ -123,14 +98,14 @@ class GM:
         self.h = 1.0/4.0
         self.gamma = 6
 
-        self.mu_x = 0
+        self.mu_x = np.pi/2
         self.dmu_x = 0
-        self.mu_nu = 0
+        self.mu_nu = np.pi/2
 
         self.da = 1/self.h
         self.eta = 0.00025
 
-        self.omega_s = np.exp(-self.pi_s_int)
+        self.omega_s = np.exp(-self.pi_s)
         self.omega_x = np.exp(-self.pi_x)
         self.omega_nu = np.exp(-self.pi_nu)
 
@@ -155,21 +130,22 @@ class GM:
         self.dmu_x = f(self.mu_x, self.mu_nu, self.h)
 
         s = self.s
-        oms, omx, omn = (self.omega_s, self.omega_x, self.omega_nu)
+        oms, omx = (self.omega_s, self.omega_x)
         mx = self.mu_x
         dmx = self.dmu_x
         n = self.mu_nu
         h, da = self.h, self.da
 
         # TODO: gradient descent optimizations
-        self.gd_dmu_x = -omx*(dmx - f(mx, n, h))
-        self.gd_mu_x = oms*(s - mx)
-        self.gd_mu_nu = omx*(dmx - f(mx, n, h))
-        self.gd_a = 0
+        self.gd_dmu_x = -(1/omx)*(dmx - f(mx, n, h))
+        self.gd_mu_x = (1/oms)*(s - mx)
+        self.gd_mu_nu = (1/omx)*(dmx - f(mx, n, h))
+        self.gd_a = (1/oms)*da*(s - mx)
 
         # update with gradients
         self.dmu_x += self.eta*self.gd_dmu_x
         self.mu_x += self.eta*self.gd_mu_x
+        self.mu_nu += self.eta*self.gd_mu_nu
 
         self.sg = self.mu_x
 
@@ -183,33 +159,13 @@ if __name__ == "__main__":
 
     # %%
     data = []
-
-    stime = 100000
-    t = np.arange(stime)
-    ta = skewgauss(n=stime, relative_location=0.5, alpha=4)
     da = 0
-
-    plt.plot(ta)
-    # %%
+    stime = 28000
     for t in range(stime):
-        gm.mu_nui = ta[t]
         gp.update(da)
-        gp.generate()
-        sp, ss = gp.sp, gp.ss
-        da = gm.update((sp, ss))
-        spg, ssg = gm.spg, gm.ssg
-        os = gm.omega_s
-        data.append((sp, ss, spg, ssg, os))
+        s = gp.s
+        da = gm.update(s)
+        data.append(gp.oscil.y)
 
-    data = np.vstack(data)
 
-    # %%
-    sp, ss, spg, ssg, os = data.T
-
-    t = np.arange(len(ss))
-    plt.fill_between(t, ss - os, ss + os, color=[0.8, 0.8, 0.8])
-    p1, = plt.plot(t, sp, c='black', lw=1)
-    p2, = plt.plot(t, ss, c='black', lw=2)
-    p3, = plt.plot(t, spg, c='blue', lw=1)
-    p4, = plt.plot(t, ssg, c='blue', lw=2)
-    plt.legend([p1, p2, p3, p4], ['sp', 'ss', 'spg', 'ssg'])
+plt.plot(data)
