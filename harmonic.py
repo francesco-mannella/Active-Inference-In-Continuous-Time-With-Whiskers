@@ -1,5 +1,6 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 rng = np.random.RandomState()
 
 
@@ -7,8 +8,8 @@ class Harmonic:
 
     def __init__(self, h=0.01):
         self.h = h
-        self.x1 = 1
-        self.x2 = 1
+        self.x = 1
+        self.dx = 1
         self.ampl = np.pi/2
         self.freq = 0.1
         self.peak = 0
@@ -18,14 +19,14 @@ class Harmonic:
 
     def update(self, ampl=np.pi*0.5, freq=0.1):
 
-        self.ampl += self.h*(-self.ampl
-                             + np.maximum(0, np.minimum(np.pi, ampl)))
-        self.freq += self.h*(-self.freq
-                             + np.maximum(0,  2*np.pi*freq))
-        self.x1 += self.h*self.freq*self.x2
-        self.x2 += -self.h*self.x1
+        self.ampl += self.h*(-self.ampl + ampl)
+        self.freq += self.h*(-self.freq + 2*np.pi*freq)
 
-        self.y = self.ampl*self.x1
+        self.ddx = -self.freq * self.x
+        self.dx += self.h * self.ddx
+        self.x += self.h * self.dx
+
+        self.y = self.ampl*self.x
         self.yw = np.roll(self.yw, -1)
         self.yw[-1] = self.y
         self.peak = np.abs(np.diff(np.sign(np.diff(self.yw))))
@@ -41,8 +42,8 @@ if __name__ == "__main__":
     tt = np.exp(-0.5*((0.08*stime)**-2)*(T - stime*0.6)**2)
 
     for t in T:
-        a = np.pi*(0.5 - 0.5*tt[t])
-        f = 0.1 + 20*tt[t]
+        a = 0.5*np.pi*(1 - tt[t])
+        f = .5 + 20*tt[t]
         x.append(h.update(ampl=a, freq=f))
         p.append(h.peak)
     x = np.array(x)
@@ -53,6 +54,6 @@ if __name__ == "__main__":
     plt.figure(figsize=(10, 5))
     plt.plot(-100 + 100*p, c="y", lw=0.5)
     plt.plot(x, lw=2, c="k")
-    plt.ylim([-np.max(x), np.max(x)])
+    plt.ylim([-np.max(x)*1.5, np.max(x)*1.5])
 
     plt.show()

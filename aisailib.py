@@ -15,36 +15,21 @@ class GP:
     Implementation of the generative process :
 
     Attributes:
-        pi_s: (float) Precision of sensory states probabilities.
-        pi_x: (float) Precision of hidden state probabilities.
+        pi_s: (float) Precision of sensory probabilities.
         h: (float) Integration step of hidden state dynamics.
-        mu_x: (float) Hidden state.
-        dmu_x: (float) Change of hidden state.
         mu_s: (float) Proprioceptive sensory channel (central value).
-        eta: (float) integration step
         omega_s: (float) standard deviation of sensory states
-        omega_x: (float)  standard deviation of inner state increments
         a: (float) action
     """
 
     def __init__(self):
 
-        self.pi_s = 8
-        self.pi_x = 8
-
+        self.pi_s = 3
         self.h = 1.0/4.0
-
-        self.mu_x = np.pi/2
-        self.dmu_x = 0
         self.mu_s = np.pi/2
-
         self.eta = 0.00025
-
         self.omega_s = np.exp(-self.pi_s)
-        self.omega_x = np.exp(-self.pi_x)
-
-        self.oscil = Harmonic(amplitude=0.5*np.pi, freq=0.0005, h=0.001)
-
+        self.oscil = Harmonic(h=0.01)
         self.a = 0
 
     def update(self, action_increment):
@@ -58,14 +43,10 @@ class GP:
         da = action_increment
         self.a += self.eta*da
 
-        self.dmu_x = f(self.mu_x, 0.5*np.pi*np.tanh(self.a), self.h)
-        self.dx = self.dmu_x + self.omega_x*rng.randn()
-        self.mu_x += self.eta*self.dx
-
-        self.oscil.amplitude = self.mu_x
-
         self.oscil.update()
-        self.s = self.oscil.peak
+        self.mu_s = self.oscil.update(self.a)
+        self.s = self.mu_s + self.omega_s*rng.randn()
+        return self.s
 
 
 class GM:
@@ -160,12 +141,13 @@ if __name__ == "__main__":
     # %%
     data = []
     da = 0
-    stime = 28000
+    stime = 2000
     for t in range(stime):
         gp.update(da)
+        y = gp.mu_s
         s = gp.s
-        da = gm.update(s)
-        data.append(gp.oscil.y)
+        #da = gm.update(s)
+        data.append([s, y])
 
-
+plt.figure(figsize=(10, 6))
 plt.plot(data)
