@@ -29,7 +29,7 @@ def f(x, a, freq=fr):
     1, 0, 0,
     a, 0,-1])
     return W*x
-
+sssssssaaaaa
 def normal1d(x, m, S):
     n = exp(-0.5*(S**-2)*(x - m)**2) \
         / (S*sqrt(2*pi))
@@ -67,6 +67,12 @@ d_dmux = Eq(-diff("F", dmux, evaluate=False),
 display(d_dmux)
 print(syp.latex(d_dmux))
 
+
+# %%
+dg_nu = Eq(-diff("F", munu, evaluate=False),
+        -diff(F, munu).simplify(), evaluate=False)
+display(dg_nu)
+print(syp.latex(dg_nu))
 # %%
 a = symbols("a", real=True)
 sa = syp.Function("s")(a)
