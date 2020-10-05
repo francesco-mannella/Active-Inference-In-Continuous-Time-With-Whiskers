@@ -43,7 +43,6 @@ class GP:
         da = action_increment
         self.a += self.eta*da
 
-        self.oscil.update()
         self.mu_s = self.oscil.update(self.a)
         self.s = self.mu_s + self.omega_s*rng.randn()
         return self.s

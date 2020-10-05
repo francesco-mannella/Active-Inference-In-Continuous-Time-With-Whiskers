@@ -6,11 +6,12 @@ rng = np.random.RandomState()
 
 class Harmonic:
 
-    def __init__(self, h=0.01):
+    def __init__(self, h=0.01, hy=0.25):
         self.h = h
+        self.hy = hy
         self.x = 1
         self.dx = 1
-        self.ampl = np.pi/2
+        self.ampl = 0
         self.freq = 0.1
         self.peak = 0
 
@@ -26,12 +27,8 @@ class Harmonic:
         self.dx += self.h * self.ddx
         self.x += self.h * self.dx
 
-        self.y = self.ampl*self.x
-        self.yw = np.roll(self.yw, -1)
-        self.yw[-1] = self.y
-        self.peak = np.abs(np.diff(np.sign(np.diff(self.yw))))
-        return self.y
-
+        self.y += self.h*(self.ampl*self.x - self.hy*self.y)
+        return self.dx, self.x, self.y
 
 if __name__ == "__main__":
     stime = 5000
@@ -43,9 +40,9 @@ if __name__ == "__main__":
 
     for t in T:
         a = 0.5*np.pi*(1 - tt[t])
-        f = .5 + 20*tt[t]
-        x.append(h.update(ampl=a, freq=f))
-        p.append(h.peak)
+        f = 1 + 60*tt[t]
+        h.update(ampl=a, freq=f)
+        x.append(h.y)
     x = np.array(x)
     p = np.array(p)
 
@@ -54,6 +51,6 @@ if __name__ == "__main__":
     plt.figure(figsize=(10, 5))
     plt.plot(-100 + 100*p, c="y", lw=0.5)
     plt.plot(x, lw=2, c="k")
-    plt.ylim([-np.max(x)*1.5, np.max(x)*1.5])
+    plt.ylim([-np.max(x)*1, np.max(x)*1])
 
     plt.show()
