@@ -1,5 +1,4 @@
 import numpy as np
-from harmonic import Harmonic
 import matplotlib.pyplot as plt
 rng = np.random.RandomState()
 
@@ -16,23 +15,34 @@ class GP:
 
     Attributes:
         pi_s: (float) Precision of sensory probabilities.
-        h: (float) Integration step of hidden state dynamics.
-        mu_s: (float) Proprioceptive sensory channel (central value).
-        omega_s: (float) standard deviation of sensory states
+        pi_x: (float) Precision of hidden states probabilities.
+        h: (float) Integration step of hidden states dynamics.
+        gamma: (float) Attenuation factor of sensory prediction error.
+        mu_s: (float)  sensory channel (central value).
+        mu_x: (float) hidden state (central value).
+        dmu_x: (float) Change of  hidden state (central value).
+        da: (float) Increment of action
+        eta: (float) Integration step
+        omega_s: (float) Standard deviation of sensory states
+        omega_x: (float)  Standard deviation of inner states
         a: (float) action
     """
 
     def __init__(self):
 
-        self.pi_s = 3
+        self.pi_s = 6
+        self.pi_x = 6
         self.h = 1.0/4.0
+        self.mu_x = np.ones(3)
         self.mu_s = np.pi/2
-        self.eta = 0.00025
+        self.eta = 0.0005
         self.omega_s = np.exp(-self.pi_s)
-        self.oscil = Harmonic(h=0.01)
-        self.a = 0
+        self.omega_x = np.exp(-self.pi_x)
+        self.freq = 0.01
+        self.decay = 0.2
+        self.a = np.pi*2
 
-    def update(self, action_increment):
+    def update(self, action):
         """ Update dynamics of the process.
 
         Args:
@@ -40,11 +50,17 @@ class GP:
 
         """
 
-        da = action_increment
-        self.a += self.eta*da
+        self.a += self.eta*action
 
-        self.mu_s = self.oscil.update(self.a)
-        self.s = self.mu_s + self.omega_s*rng.randn()
+        self.mu_x += self.h*np.array([
+            self.mu_x[1] - self.decay*self.freq*self.mu_x[0],
+            -self.freq*self.mu_x[0],
+            self.a*self.mu_x[1] - self.mu_x[2]])
+
+        self.mu_x[2] = np.minimum(2*np.pi, self.mu_x[2])
+        self.mu_x[2] = np.maximum(-2*np.pi, self.mu_x[2])
+
+        self.s = self.mu_x[2] + self.omega_s*rng.randn()
         return self.s
 
 
@@ -78,12 +94,14 @@ class GM:
         self.h = 1.0/4.0
         self.gamma = 6
 
-        self.mu_x = np.pi/2
-        self.dmu_x = 0
+        self.mu_x = np.ones(3)
+        self.dmu_x = np.ones(3)
         self.mu_nu = np.pi/2
 
         self.da = 1/self.h
-        self.eta = 0.00025
+        self.eta = 0.0005
+        self.freq = 0.01
+        self.decay = 0.2
 
         self.omega_s = np.exp(-self.pi_s)
         self.omega_x = np.exp(-self.pi_x)
@@ -102,32 +120,44 @@ class GM:
 
         # update sensory states and dynamic precision
         self.s = sensory_states
+        self.da = self.mu_x[0]/self.h
         self.omega_s = np.exp(-self.pi_s)
         self.omega_x = np.exp(-self.pi_x)
         self.omega_nu = np.exp(-self.pi_nu)
 
+
         # dynamics of internal variables
-        self.dmu_x = f(self.mu_x, self.mu_nu, self.h)
+        self.dmu_x = np.array([
+            self.mu_x[1] - self.decay*self.freq*self.mu_x[0],
+            -self.freq*self.mu_x[0],
+            self.mu_nu*self.mu_x[1] - self.mu_x[2]])
 
         s = self.s
         oms, omx = (self.omega_s, self.omega_x)
         mx = self.mu_x
         dmx = self.dmu_x
         n = self.mu_nu
-        h, da = self.h, self.da
+        h, da, fr, d = self.h, self.da, self.freq, self.decay
 
         # TODO: gradient descent optimizations
-        self.gd_dmu_x = -(1/omx)*(dmx - f(mx, n, h))
-        self.gd_mu_x = (1/oms)*(s - mx)
-        self.gd_mu_nu = (1/omx)*(dmx - f(mx, n, h))
-        self.gd_a = (1/oms)*da*(s - mx)
+        self.gd_mu_x = np.array([
+            -(1/omx)*(n*(n*mx[0] - mx[2] - dmx[2]) +
+                      d*fr*(d*fr*mx[0] + dmx[1])),
+            -(1/omx)*(fr*(fr*mx[0] + dmx[1])),
+            (1/oms)*(s-mx[2]) - (1/omx)*(-n*mx[0] + mx[2] + dmx[2])])
+
+        self.gd_dmu_x = np.array([
+            -(1/omx)*(fr*mx[1] + dmx[0]),
+            -(1/omx)*(d*fr*mx[0] + dmx[1]),
+            -(1/omx)*(-n*mx[0] + mx[2] + dmx[2])])
+
+        self.gd_mu_nu =  -(1/omx)*mx[0]*(n*mx[0]  - mx[2] - dmx[2])
+        self.gd_a = (1/oms)*da*(s - mx[2])
 
         # update with gradients
         self.dmu_x += self.eta*self.gd_dmu_x
-        self.mu_x += self.eta*self.gd_mu_x
+        self.mu_x += self.eta*(self.dmu_x + self.gd_mu_x)
         self.mu_nu += self.eta*self.gd_mu_nu
-
-        self.sg = self.mu_x
 
         return self.gd_a
 
@@ -139,14 +169,14 @@ if __name__ == "__main__":
 
     # %%
     data = []
-    da = 0
-    stime = 2000
+    a = 2*np.pi
+    stime = 5500
     for t in range(stime):
-        gp.update(da)
-        y = gp.mu_s
-        s = gp.s
-        #da = gm.update(s)
-        data.append([s, y])
+        gp.update(a)
+        y, s, ym = gp.mu_s, gp.s, gm.mu_nu
+        a = gm.update(s)
 
+        data.append([s, y, ym])
+data = np.vstack(data)
 plt.figure(figsize=(10, 6))
-plt.plot(data)
+plt.plot(data[:,2])

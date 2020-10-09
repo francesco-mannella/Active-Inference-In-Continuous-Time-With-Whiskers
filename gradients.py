@@ -19,26 +19,30 @@ munu = symbols(r'\mu_{\nu}', real=True)
 
 Sigma_x = eye(3, real=True)*sigma_x
 
+
 def g(x):
     return x[2]
 
 
 def f(x, a, freq=fr):
     W = Matrix(3, 3,
-    [0, -freq, 0,
-    1, 0, 0,
-    a, 0,-1])
+               [0,         -freq,  0,
+                -0.25*freq, 0,     0,
+                a,          0,    -1])
     return W*x
-sssssssaaaaa
+
+
 def normal1d(x, m, S):
     n = exp(-0.5*(S**-2)*(x - m)**2) \
         / (S*sqrt(2*pi))
     return n
 
+
 def normal(x, m, S):
     n = exp(-0.5*(x - m).T * inv(S) * (x - m)) \
         / sqrt(S.norm()*((2*pi)**2))
     return n
+
 
 p_s_mu = normal1d(s, g(mux), sigma_s)
 p_dmu_mu = normal(dmux, f(mux, munu), Sigma_x)
@@ -56,8 +60,8 @@ display(F)
 
 # %%
 gd_mux = Eq(-diff("F", mux, evaluate=False),
-           -syp.separatevars(diff(F, mux), force=True),
-           evaluate=False)
+            -syp.separatevars(diff(F, mux), force=True),
+            evaluate=False)
 display(gd_mux)
 print(syp.latex(gd_mux))
 
@@ -70,7 +74,7 @@ print(syp.latex(d_dmux))
 
 # %%
 dg_nu = Eq(-diff("F", munu, evaluate=False),
-        -diff(F, munu).simplify(), evaluate=False)
+           -diff(F, munu).simplify(), evaluate=False)
 display(dg_nu)
 print(syp.latex(dg_nu))
 # %%
