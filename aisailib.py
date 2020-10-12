@@ -32,7 +32,7 @@ class GP:
 
         self.pi_s = 6
         self.pi_x = 6
-        self.h = 1.0/4.0
+        self.h = 0.9999
         self.mu_x = np.ones(3)
         self.mu_s = 1
         self.omega_s = np.exp(-self.pi_s)
@@ -41,6 +41,7 @@ class GP:
         self.freq = freq
         self.decay = decay
         self.a = amp
+        self.t = 0
 
     def update(self, action):
         """ Update dynamics of the process.
@@ -51,18 +52,22 @@ class GP:
         """
 
         self.a += self.eta*action
-
+        self.a = self.a
         self.mu_x += self.h*np.array([
-            self.mu_x[1] - self.decay*self.freq*self.mu_x[0],
+            self.mu_x[1],
             -self.freq*self.mu_x[0],
-            self.a*self.mu_x[1] - self.mu_x[2]])
+            self.a*self.mu_x[0] - self.h*self.mu_x[2]])
 
-        self.mu_x[2] = np.minimum(np.pi, self.mu_x[2])
-        self.mu_x[2] = np.maximum(-np.pi, self.mu_x[2])
+        self.mu_x[2] = np.minimum( 0.5*np.pi, self.mu_x[2])
+        self.mu_x[2] = np.maximum(-0.5*np.pi, self.mu_x[2])
+        # if self.t > 3000:
+        #     self.mu_x[2] = np.minimum( 0.1*np.pi, self.mu_x[2])
+        #     self.mu_x[2] = np.maximum(-0.1*np.pi, self.mu_x[2])
 
         self.s = self.mu_x[2] + self.omega_s*rng.randn()
-        return self.s
 
+        self.t += 1
+        return self.s
 
 class GM:
     """ Generative Model.
@@ -85,20 +90,20 @@ class GM:
 
     """
 
-    def __init__(self,eta=0.0005, freq=0.01, decay=0.3, amp=np.pi/2):
+    def __init__(self,eta=0.0005, freq=0.001, decay=0.3, amp=np.pi/2):
 
-        self.pi_s = 3
-        self.pi_x = 3
-        self.pi_nu = 3
+        self.pi_s = 6
+        self.pi_x = 6
+        self.pi_nu = 6
 
-        self.h = 1.0
+        self.h = 0.9999
         self.gamma = 6
 
         self.mu_x = -np.ones(3)
         self.dmu_x = -np.ones(3)
         self.mu_nu = amp
 
-        self.da = 1/self.h
+        self.da = 1
         self.eta = eta
         self.freq = freq
         self.decay = decay
@@ -120,7 +125,7 @@ class GM:
 
         # update sensory states and dynamic precision
         self.s = sensory_states
-        self.da = 0.01#self.mu_x[2]/self.h
+        self.da = 0.001
         self.omega_s = np.exp(-self.pi_s)
         self.omega_x = np.exp(-self.pi_x)
         self.omega_nu = np.exp(-self.pi_nu)
@@ -128,12 +133,12 @@ class GM:
 
         # dynamics of internal variables
         self.dmu_x = np.array([
-            self.mu_x[1] - self.decay*self.freq*self.mu_x[0],
+            self.mu_x[1],
             -self.freq*self.mu_x[0],
-            self.mu_nu*self.mu_x[1] - self.mu_x[2]])
+            self.mu_nu*self.mu_x[0] - self.h*self.mu_x[2]])
 
         s = self.s
-        oms, omx = (self.omega_s, self.omega_x)
+        oms, omx, omn = (self.omega_s, self.omega_x, self.omega_nu)
         mx = self.mu_x
         dmx = self.dmu_x
         n = self.mu_nu
@@ -141,18 +146,18 @@ class GM:
 
         # TODO: gradient descent optimizations
         self.gd_mu_x = np.array([
-            -(1/omx)*(n*(n*mx[0] - mx[2] - dmx[2]) +
+            -(1/omx)*(n*(n*mx[0] - h*mx[2] - dmx[2]) +
                       d*fr*(d*fr*mx[0] + dmx[1])),
-            -(1/omx)*(fr*(fr*mx[1] + dmx[0])),
-            (1/oms**2)*(s-mx[2]) - (1/omx)*(dmx[2] - (n*mx[0] - mx[2]))])
+            -(1/omx)*(mx[1] - dmx[0]),
+            (1/oms)*(s-mx[2]) - (1/omx)*h*(dmx[2] - (n*mx[0] - h*mx[2]))])
 
         self.gd_dmu_x = np.array([
-            -(1/omx)*(fr*mx[1] + dmx[0]),
+            -(1/omx)*(dmx[0] - mx[1]),
             -(1/omx)*(d*fr*mx[0] + dmx[1]),
-            -(1/omx)*(dmx[2] - (n*mx[0] - mx[2]))])
+            -(1/omx)*(h*dmx[2] - (n*mx[0] - h*mx[2]))])
 
-        self.gd_mu_nu =  (1/omx)*mx[0]*(dmx[2] - (n*mx[0] - mx[2]))
-        self.gd_a = -(1/oms**2)*da*(s - mx[2])
+        self.gd_mu_nu =  (1/omx)*mx[0]*(dmx[2] - (n*mx[0] - h*mx[2]))
+        self.gd_a = -(1/oms)*da*(s - mx[2])
 
         # update with gradients
         self.dmu_x += self.eta*self.gd_dmu_x
@@ -164,13 +169,13 @@ class GM:
 
 if __name__ == "__main__":
 
-    gp = GP(decay=0.2)
-    gm = GM(decay=0.2)
+    gp = GP(decay=0.3, freq=0.00001)
+    gm = GM(decay=0.3, freq=0.00001)
 
     # %%
     data = []
-    a = 2*np.pi
-    stime = 10000
+    a = 0
+    stime = 40000
     for t in range(stime):
         gp.update(a)
         s, yg, ym, aa, n = gp.s, gp.mu_x[2], gm.mu_x[2], gp.a, gm.mu_nu
@@ -179,4 +184,7 @@ if __name__ == "__main__":
         data.append([s, yg, ym, aa, n])
 data = np.vstack(data)
 plt.figure(figsize=(10, 6))
-plt.plot(data[:,[4]])
+plt.plot(data[:,1], c="red", lw=1, ls="dashed")
+plt.plot(data[:,3], c="red", lw=8)
+plt.plot(data[:,2], c="green", lw=1, ls="dashed")
+plt.plot(data[:,4], c="green", lw=3)

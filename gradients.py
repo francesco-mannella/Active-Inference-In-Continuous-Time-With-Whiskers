@@ -11,7 +11,7 @@ C = symbols("C", real="True")
 sigma_s, sigma_x, sigma_nu = \
     symbols(r"\sigma_s \sigma_x \sigma_{\nu}", real=True)
 
-s = symbols(r's', real=True)
+s,h = symbols(r's,h', real=True)
 fr = symbols(r'\phi', real=True)
 mux = Matrix(3, 1, symbols(r'\mu_{x_1} \mu_{x_2} \mu_{x_3}'), real=True)
 dmux = Matrix(3, 1, symbols(r'd\mu_{x_1} d\mu_{x_2} d\mu_{x_3}'), real=True)
@@ -26,9 +26,9 @@ def g(x):
 
 def f(x, a, freq=fr):
     W = Matrix(3, 3,
-               [0,         -freq,  0,
+               [0,           1,  0,
                 -0.25*freq, 0,     0,
-                a,          0,    -1])
+                a,          0,    -h])
     return W*x
 
 
@@ -47,7 +47,11 @@ def normal(x, m, S):
 p_s_mu = normal1d(s, g(mux), sigma_s)
 p_dmu_mu = normal(dmux, f(mux, munu), Sigma_x)
 pF = p_s_mu*p_dmu_mu
+pF = syp.nsimplify(pF)
+display(p_s_mu)
+display(syp.nsimplify(p_dmu_mu))
 
+display(pF)
 
 # %%
 F = -log(pF[0]) - C
