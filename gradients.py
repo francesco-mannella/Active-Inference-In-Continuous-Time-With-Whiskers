@@ -2,7 +2,7 @@ from IPython.display import display
 import sympy as syp
 from sympy import init_printing, symbols, sqrt, \
     exp, Inverse as inv, pi, log, Eq, diff
-from sympy.matrices import Matrix, eye, zeros
+from sympy.matrices import Matrix, eye
 init_printing(use_unicode=True)
 # %%
 
@@ -11,7 +11,7 @@ C = symbols("C", real="True")
 sigma_s, sigma_x, sigma_nu = \
     symbols(r"\sigma_s \sigma_x \sigma_{\nu}", real=True)
 
-s,h = symbols(r's,h', real=True)
+s, h = symbols(r's,h', real=True)
 fr = symbols(r'\phi', real=True)
 mux = Matrix(3, 1, symbols(r'\mu_{x_1} \mu_{x_2} \mu_{x_3}'), real=True)
 dmux = Matrix(3, 1, symbols(r'd\mu_{x_1} d\mu_{x_2} d\mu_{x_3}'), real=True)
