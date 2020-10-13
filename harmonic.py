@@ -6,35 +6,39 @@ rng = np.random.RandomState()
 
 class Harmonic:
 
-    def __init__(self):
-        self.h = 0.1
-        self.x = 2*np.pi
-        self.dx = 2*np.pi
-        self.y = 2*np.pi
+    def __init__(self, h=0.01, hy=0.25):
+        self.h = h
+        self.x = np.ones(2)
+        self.dx = np.ones(2)
+        self.y = 0
 
     def update(self, ampl, freq, decay):
 
-        self.dx += -self.h*freq*self.x
-        self.x +=  self.h*self.dx
-        self.y += self.h*(ampl*self.x -decay*self.y)
+        decay += np.maximum(0, self.x[0] - ampl)
+
+        self.dx = np.dot([
+        [0, freq],
+        [-1, -decay]], self.x)
+        self.x += self.h * self.dx
 
         return self.x
 
-
 if __name__ == "__main__":
-    stime = 3000
+    stime = 20000
     h = Harmonic()
+    x = []
+    T = np.arange(stime)
 
-    data = []
-    for t in range(stime):
-        if stime*0.5<t<stime*0.7:
-            h.update(ampl=4, freq=2, decay=0.99)
-        else:
-            h.update(ampl=1, freq=7, decay=0.99)
-        data.append(h.y)
-    data = np.array(data)
+    for t in T:
+
+        tt = np.exp(-0.5*(2000**-2)*(t-stime/2)**2)
+
+
+        h.update(ampl=10-9*tt, freq=30-25*tt, decay=0.0)
+        x.append(h.x[0])
+    x = np.array(x)
 
     plt.figure(figsize=(10, 5))
-    plt.plot(data, lw=2, c="k")
+    plt.plot(x, lw=2, c="k")
 
     plt.show()
