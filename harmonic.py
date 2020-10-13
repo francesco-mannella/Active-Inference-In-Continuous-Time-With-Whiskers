@@ -6,51 +6,35 @@ rng = np.random.RandomState()
 
 class Harmonic:
 
-    def __init__(self, h=0.01, hy=0.25):
-        self.h = h
-        self.hy = hy
-        self.x = 1
-        self.dx = 1
-        self.ampl = 0
-        self.freq = 0.1
-        self.peak = 0
+    def __init__(self):
+        self.h = 0.1
+        self.x = 2*np.pi
+        self.dx = 2*np.pi
+        self.y = 2*np.pi
 
-        self.y = 0
-        self.yw = np.zeros(3)
+    def update(self, ampl, freq, decay):
 
-    def update(self, ampl=np.pi*0.5, freq=0.1):
+        self.dx += -self.h*freq*self.x
+        self.x +=  self.h*self.dx
+        self.y += self.h*(ampl*self.x -decay*self.y)
 
-        self.ampl += self.h*(-self.ampl + ampl)
-        self.freq += self.h*(-self.freq + 2*np.pi*freq)
+        return self.x
 
-        self.ddx = -self.freq * self.x
-        self.dx += self.h * self.ddx
-        self.x += self.h * self.dx
-
-        self.y += self.h*(self.ampl*self.x - self.hy*self.y)
-        return self.dx, self.x, self.y
 
 if __name__ == "__main__":
-    stime = 5000
+    stime = 3000
     h = Harmonic()
-    x = []
-    p = []
-    T = np.arange(stime)
-    tt = np.exp(-0.5*((0.08*stime)**-2)*(T - stime*0.6)**2)
 
-    for t in T:
-        a = 0.5*np.pi*(1 - tt[t])
-        f = 1 + 60*tt[t]
-        h.update(ampl=a, freq=f)
-        x.append(h.y)
-    x = np.array(x)
-    p = np.array(p)
+    data = []
+    for t in range(stime):
+        if stime*0.5<t<stime*0.7:
+            h.update(ampl=4, freq=2, decay=0.99)
+        else:
+            h.update(ampl=1, freq=7, decay=0.99)
+        data.append(h.y)
+    data = np.array(data)
 
     plt.figure(figsize=(10, 5))
-    plt.plot(tt, lw=2, c="k")
-    plt.figure(figsize=(10, 5))
-    plt.plot(-100 + 100*p, c="y", lw=0.5)
-    plt.plot(x, lw=2, c="k")
-    plt.ylim([-np.max(x)*1, np.max(x)*1])
+    plt.plot(data, lw=2, c="k")
 
     plt.show()
