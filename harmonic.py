@@ -3,39 +3,38 @@ import numpy as np
 
 rng = np.random.RandomState()
 
+def sigm(x):
+    return 1/(1+np.exp(-x*30))
 
 class Harmonic:
 
-    def __init__(self, h=0.01, hy=0.25):
-        self.h = h
-        self.x = np.ones(2)
-        self.dx = np.ones(2)
-        self.y = 0
+    def __init__(self):
+        self.h = 0.1
+        self.x1 = 1
+        self.x2 =  1
+        self.x3 =  1
 
-    def update(self, ampl, freq, decay):
+    def update(self, ampl, freq):
+        th = np.abs(self.x1) - ampl
+        self.x1 += self.h*(freq*self.x2) 
+        self.x2 += self.h*(-self.x1 - self.x3*self.x2)
+        self.x3 += self.h*(th*sigm(th) - self.x3)
 
-        decay += np.maximum(0, self.x[0] - ampl)
-
-        self.dx = np.dot([
-        [0, freq],
-        [-1, -decay]], self.x)
-        self.x += self.h * self.dx
-
-        return self.x
+        return self.x1
 
 if __name__ == "__main__":
-    stime = 20000
+    stime = 10000
     h = Harmonic()
     x = []
     T = np.arange(stime)
 
     for t in T:
 
-        tt = np.exp(-0.5*(2000**-2)*(t-stime/2)**2)
+        tt = np.exp(-0.5*(200**-2)*(t-stime/2)**2)
 
-
-        h.update(ampl=10-9*tt, freq=30-25*tt, decay=0.0)
-        x.append(h.x[0])
+        ttt = stime*0.3 < t < stime*0.7
+        h.update(ampl=1+0.4*ttt, freq=0.001 + 0.1*ttt)
+        x.append(h.x1)
     x = np.array(x)
 
     plt.figure(figsize=(10, 5))
