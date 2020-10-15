@@ -58,7 +58,7 @@ class Sim:
 
         self.box_points = np.array([
             (-0.8, -.5), (0.8, -.5),
-            (0.8, .5), (-0.8, .5)]) + pos
+            (0.8, 2.5), (-0.8, 2.5)]) + pos
         box_shape = mpatches.PathPatch(
             Path(np.vstack([self.box_points, (0, 0)]),
                  [Path.MOVETO, Path.LINETO,

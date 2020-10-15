@@ -60,5 +60,5 @@ plt.plot([0, stime], [1.5, 1.5], c="green", lw=0.5)
 plt.plot([0, stime], [1, 1], c="green", lw=0.5)
 plt.plot([0, stime], [0.5, 0.5], c="green", lw=0.5)
 plt.legend([x, n], ["proprioception (current angle)",
-                    "action (amplitude)"])
+                    "internal cause (amplitude)"])
 plt.savefig("demo.png")
