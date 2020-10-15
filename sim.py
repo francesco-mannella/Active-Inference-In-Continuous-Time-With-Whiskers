@@ -1,3 +1,4 @@
+from mkvideo import vidManager
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
@@ -7,15 +8,15 @@ Path = mpath.Path
 # %%
 
 
-def a2xy(a, l=1):
-
-    return np.cos(a)*l, np.sin(a)*l
+def a2xy(angle, radius=1):
+    return np.cos(angle)*radius, np.sin(angle)*radius
 
 
 class Sim:
 
-    def __init__(self):
-        self.fig = plt.figure()
+    def __init__(self, name):
+        self.fig = plt.figure(figsize=(6,6))
+        self.vm = vidManager(self.fig, name=name, dirname=name)
         self.ax = self.fig.add_subplot(111, aspect="equal")
 
         head_points = np.array([(-1, -0.75), (0, 1.5), (1, -0.75)])
@@ -82,14 +83,19 @@ class Sim:
         angle_model += 0.2*np.pi
         self.set_whisker(angle)
         self.set_whisker_model(angle_model)
-        plt.pause(0.1)
+        self.fig.canvas.draw()
+        self.vm.save_frame()
+
+    def close(self):
+        self.vm.mk_video()
 
 
 if __name__ == "__main__":
     plt.ion()
-    sim = Sim()
+    sim = Sim("demo")
     sim.set_box([0, 1.3])
     for a in np.linspace(0, 50*np.pi, 1000):
         sim.update(0.3*np.pi*np.sin(a), 0.3*np.pi*np.sin(a))
-        #if np.abs(np.sin(a) - 0.5) < 0.3:
+        # if np.abs(np.sin(a) - 0.5) < 0.3:
         #    input()
+    sim.close()

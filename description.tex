@@ -6,15 +6,15 @@
 \usepackage{amsmath}
 \begin{document}
 
-\section*{Generative process}
+\section*{Generative model}
 
 \begin{eqnarray}
   F&=&p(s|\mu_x)p(\mu_x'|\mu_x,\nu)\nonumber\\
   s &=& \mu_{x_3} + \omega_s \nonumber \\
   \dot{\mathbf{x}} &=&
   \left[\begin{array}{c}
-  \mu_{x_2} \\
-  -\phi\mu_{x_1} \\
+  \phi\mu_{x_2} \\
+  -\mu_{x_1} \\
   \mu_{\nu}\mu_{x_1} - \mu_{x_3} \\
   \end{array}\right] +\boldsymbol{\omega_x}\nonumber \\
   \nu &=& \mu_{\nu} + \omega_{\nu} \nonumber
@@ -23,24 +23,42 @@
 \section*{Gradients}
 \begin{eqnarray}
 - \frac{\partial F}{\partial
-  \left[\begin{matrix}\mu_{x_1}\\\mu_{x_2}\\\mu_{x_3}\end{matrix}\right]} &=&
-  \left[\begin{matrix}- \frac{\mu_{\nu}^{2} \mu_{x_1} - \mu_{\nu} \mu_{x_3} -
-  \mu_{\nu} d\mu_{x_3} + \frac{\mu_{x_1} \phi^{2}}{16} + \frac{\phi
-  d\mu_{x_2}}{4}}{\sigma_x}\\- \frac{\mu_{x_2} \phi^{2} + \phi
-  d\mu_{x_1}}{\sigma_x}\\- \frac{- \mu_{\nu} \mu_{x_1} + \mu_{x_3} +
-  d\mu_{x_3}}{\sigma_x} - \frac{\mu_{x_3} - s}{\sigma_s^{2}}\end{matrix}\right]
+  \left[\begin{matrix}
+  \mu_{x_1}\\\mu_{x_2}\\\mu_{x_3}\end{matrix}\right]} &=&
+  \left[\begin{matrix}
+  -\frac{\mu_{\nu}(\mu_{\nu}\mu_{x_1} - \mu_{x_3} - d\mu_{x_3}) + \mu_{x_1}  +
+  -d\mu_{x_2}}{\sigma_x}\\
+  - \frac{\phi(\phi\mu_{x_2} + d\mu_{x_1})}{\sigma_x}\\
+   \frac{s -\mu_{x_3}}{\sigma_s^{2}} - \frac{d\mu_{x_3} - (\mu_{\nu}\mu_{x_1} +
+   \mu_{x_3})}{\sigma_x}
+
+  \end{matrix}\right]
   \nonumber \\
    - \frac{\partial F}{\partial
      \left[\begin{matrix}d\mu_{x_1}\\d\mu_{x_2}\\d\mu_{x_3}\end{matrix}\right]}
-     &=& \left[\begin{matrix}- \frac{\mu_{x_2} \phi + d\mu_{x_1}}{\sigma_x}\\-
-     \frac{\frac{\mu_{x_1} \phi}{4} + d\mu_{x_2}}{\sigma_x}\\- \frac{- \mu_{\nu}
-     \mu_{x_1} + \mu_{x_3} + d\mu_{x_3}}{\sigma_x}\end{matrix}\right]\nonumber\\
+     &=& \left[\begin{matrix}
+     - \frac{d\mu_{x_1} -\phi\mu_{x_2} }{\sigma_x}\\
+     - \frac{\mu_{x_1}+ d\mu_{x_2}}{\sigma_x}\\
+     - \frac{d\mu_{x_3} - (\mu_{\nu}\mu_{x_1} - \mu_{x_3})}{\sigma_x}
+     \end{matrix}\right]\nonumber\\
   - \frac{\partial F}{\partial a} &=& - \frac{\left(- \mu_{x_3} + s{\left(a
-    \right)}\right) \frac{d}{d a} s{\left(a \right)}}{\sigma_s^{2}} \nonumber \\
-    \frac{\partial F}{\partial\mu_{\nu}} &=& - \frac{\mu_{x_1} \left(\mu_{\nu}
-    \mu_{x_1} - \mu_{x_3} - d\mu_{x_3}\right)}{\sigma_x}
+    \right)}\right) \frac{d}{d a} s{\left(a \right)}}{\sigma_s^{2}} \nonumber
 \end{eqnarray}
 
+
+
+\section*{Updates}
+
+\begin{eqnarray}
+\boldsymbol{\dot{\mu}} = \boldsymbol{d\mu}- \frac{\partial F}{\partial
+  \left[\begin{matrix}
+  \mu_{x_1}\\\mu_{x_2}\\\mu_{x_3}\end{matrix}\right]} \hspace{0.2in}&
+   \boldsymbol{d\dot{\mu}} = - \frac{\partial F}{\partial
+     \left[\begin{matrix}d\mu_{x_1}\\d\mu_{x_2}\\d\mu_{x_3}\end{matrix}\right]} \hspace{0.2in}&
+  \boldsymbol{\dot{a}} =- \frac{\partial F}{\partial a}  \hspace{0.2in}
+  \boldsymbol{\dot{\mu}_{\nu}} = \boldsymbol{\dot{a}}  \hspace{0.2in}
+  \nonumber
+\end{eqnarray}
 
 
 

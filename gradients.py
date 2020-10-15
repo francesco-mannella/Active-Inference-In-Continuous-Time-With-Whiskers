@@ -25,7 +25,7 @@ def g(x):
 
 
 def f(x, a, freq=fr):
-    W = Matrix(3, 3,
+    W = Matrix(3, 1,
                [0,       freq,  0,
                -1,          0,     0,
                 a,          0,    -1])
@@ -76,11 +76,6 @@ display(d_dmux)
 print(syp.latex(d_dmux))
 
 
-# %%
-dg_nu = Eq(-diff("F", munu, evaluate=False),
-           -diff(F, munu).simplify(), evaluate=False)
-display(dg_nu)
-print(syp.latex(dg_nu))
 # %%
 a = symbols("a", real=True)
 sa = syp.Function("s")(a)
