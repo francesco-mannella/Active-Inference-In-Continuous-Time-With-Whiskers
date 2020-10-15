@@ -1,9 +1,9 @@
+from sim import Sim
+from aisailib import GP, GM
+import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from aisailib import GP, GM
-from sim import Sim
 
 # %%
 gp = GP(eta=0.0005, freq=0.5, amp=1)
@@ -44,15 +44,21 @@ for t in range(stime):
 
 plt.figure(figsize=(10, 6))
 plt.subplot(211)
-plt.plot(sens, c="red", lw=1, ls="dashed")
-plt.plot(ampl, c="#aa6666", lw=3)
+plt.title("Generative process")
+s, = plt.plot(sens, c="red", lw=1, ls="dashed")
+a, = plt.plot(ampl, c="#aa6666", lw=3)
 plt.plot([0, stime], [1.5, 1.5], c="red", lw=0.5)
 plt.plot([0, stime], [1, 1], c="red", lw=0.5)
 plt.plot([0, stime], [0.5, 0.5], c="red", lw=0.5)
+plt.xticks([])
+plt.legend([s, a], ["proprioception (current angle)",
+                    "action (amplitude)"])
 plt.subplot(212)
-plt.plot(sens_model, c="green", lw=1, ls="dashed")
-plt.plot(ampl_model, c="#66aa66", lw=3)
+x, = plt.plot(sens_model, c="green", lw=1, ls="dashed")
+n, = plt.plot(ampl_model, c="#66aa66", lw=3)
 plt.plot([0, stime], [1.5, 1.5], c="green", lw=0.5)
 plt.plot([0, stime], [1, 1], c="green", lw=0.5)
 plt.plot([0, stime], [0.5, 0.5], c="green", lw=0.5)
+plt.legend([x, n], ["proprioception (current angle)",
+                    "action (amplitude)"])
 plt.savefig("demo.png")
