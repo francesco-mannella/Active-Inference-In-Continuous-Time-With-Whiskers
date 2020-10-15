@@ -26,9 +26,9 @@ def g(x):
 
 def f(x, a, freq=fr):
     W = Matrix(3, 3,
-               [0,           1,  0,
-                -0.25*freq, 0,     0,
-                a,          0,    -h])
+               [0,       freq,  0,
+               -1,          0,     0,
+                a,          0,    -1])
     return W*x
 
 

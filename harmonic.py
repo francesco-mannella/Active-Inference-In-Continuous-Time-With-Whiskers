@@ -15,10 +15,9 @@ class Harmonic:
         self.x3 =  1
 
     def update(self, ampl, freq):
-        th = np.abs(self.x1) - ampl
-        self.x1 += self.h*(freq*self.x2) 
-        self.x2 += self.h*(-self.x1 - self.x3*self.x2)
-        self.x3 += self.h*(th*sigm(th) - self.x3)
+        self.x1 += self.h*(freq*self.x2)
+        self.x2 += self.h*(-self.x1)
+        self.x3 += self.h*(ampl*self.x1 - self.x3)
 
         return self.x1
 
@@ -30,11 +29,11 @@ if __name__ == "__main__":
 
     for t in T:
 
-        tt = np.exp(-0.5*(200**-2)*(t-stime/2)**2)
+        tt = np.exp(-0.5*(600**-2)*(t-stime/2)**2)
 
-        ttt = stime*0.3 < t < stime*0.7
-        h.update(ampl=1+0.4*ttt, freq=0.001 + 0.1*ttt)
-        x.append(h.x1)
+        ttt = stime*0.3 < t < stime*0.67
+        h.update(ampl=1+ 2*tt, freq=0.2)
+        x.append(h.x3)
     x = np.array(x)
 
     plt.figure(figsize=(10, 5))
