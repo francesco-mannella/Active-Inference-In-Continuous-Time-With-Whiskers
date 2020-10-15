@@ -35,8 +35,8 @@ class GP:
 
     def __init__(self, eta=0.0005, freq=0.01, amp=0.1):
 
-        self.pi_s = 4
-        self.pi_x = 3
+        self.pi_s = 4.5
+        self.pi_x = 4.5
         self.mu_x = np.ones(3)
         self.mu_s = 1
         self.omega_s = p2std(self.pi_s)
@@ -86,8 +86,8 @@ class GM:
 
     def __init__(self, eta=0.0005, freq=0.001, amp=np.pi/2):
 
-        self.pi_s = 4
-        self.pi_x = 3
+        self.pi_s = 4.5
+        self.pi_x = 4.5
 
         self.mu_x = np.ones(3)
         self.dmu_x = np.ones(3)
@@ -95,6 +95,7 @@ class GM:
 
         self.da = 1
         self.eta = eta
+        self.h = eta
         self.freq = freq
 
         self.omega_s = p2std(self.pi_s)
@@ -133,8 +134,8 @@ class GM:
             -(1/omx)*(mx[0] + dmx[1]),
             -(1/omx)*(dmx[2] - (n*mx[0] - mx[2]))])
 
-        self.gd_mu_nu = -(1/omx)*mx[0]*(n*mx[0] - mx[2] -dmx[2])
-        self.gd_a = -(1/oms**2)*da*(s - mx[2])
+        self.gd_mu_nu = -(1/omx)*mx[0]*(n*mx[0] - mx[2] - dmx[2])
+        self.gd_a = (1/oms**2)*da*(s - mx[2])
 
         # dynamics of internal variables
         self.dmu_x[0] = self.freq*self.mu_x[1]
@@ -143,8 +144,8 @@ class GM:
 
         # update with gradients
         self.dmu_x += self.eta*self.gd_dmu_x
-        self.mu_x += self.eta*(self.dmu_x + self.gd_mu_x)
-        self.mu_nu += -self.eta*self.gd_a
+        self.mu_x += self.eta*self.dmu_x + self.h*self.gd_mu_x
+        self.mu_nu += self.eta*self.gd_a
         # self.mu_nu += self.eta*self.gd_mu_nu
 
         return self.gd_a
@@ -152,35 +153,47 @@ class GM:
 
 if __name__ == "__main__":
 
-    gp = GP(eta=0.005, freq=0.5, amp=1)
-    gm = GM(eta=0.005, freq=0.5, amp=1)
+    gp = GP(eta=0.002, freq=0.5, amp=1)
+    gm = GM(eta=0.002, freq=0.5, amp=1)
 
     # %%
     data = []
-    a = 1
-    stime = 60000
+    sens = []
+    a = 0
+    stime = 100000
+    peaks = 0
     for t in range(stime):
-        gp.a = gp.a if t < stime/2 else np.minimum(0.5, gp.a)
-        gm.mu_nu += 1*(t==stime//4)
+        gp.a = np.minimum(1, gp.a)
         gp.update(a)
         s, yg, ym, aa, n = gp.s, gp.mu_x[2], gm.mu_x[2], gp.a, gm.mu_nu
+
+        if len(sens) > 2:
+            dd = np.diff(sens[-2:])[-1]
+            if np.abs(dd) < 0.0008 and dd > 0:
+                peaks += 1
+                if peaks > 6:
+                    gp.a = np.minimum(0.5, gp.a)
+                    print(t)
+
         a = gm.update(s)
 
         data.append([s, yg, ym, aa, n])
-data = np.vstack(data)
+        sens.append(s)
+    data = np.vstack(data)
 
-# %%
+    # %%
 
-plt.figure(figsize=(10, 6))
-plt.subplot(211)
-plt.plot(data[:, 1], c="red", lw=1, ls="dashed")
-plt.plot(data[:, 3], c="#aa6666", lw=3)
-plt.plot([0, stime], [1.5, 1.5], c="red", lw=0.5)
-plt.plot([0, stime], [1, 1], c="red", lw=0.5)
-plt.plot([0, stime], [0.5, 0.5], c="red", lw=0.5)
-plt.subplot(212)
-plt.plot(data[:, 2], c="green", lw=1, ls="dashed")
-plt.plot(data[:, 4], c="#66aa66", lw=3)
-plt.plot([0, stime], [1.5, 1.5], c="green", lw=0.5)
-plt.plot([0, stime], [1, 1], c="green", lw=0.5)
-plt.plot([0, stime], [0.5, 0.5], c="green", lw=0.5)
+    plt.figure(figsize=(10, 6))
+    plt.subplot(211)
+    plt.plot(data[:, 1], c="red", lw=1, ls="dashed")
+    plt.plot(data[:, 3], c="#aa6666", lw=3)
+    plt.plot([0, stime], [1.5, 1.5], c="red", lw=0.5)
+    plt.plot([0, stime], [1, 1], c="red", lw=0.5)
+    plt.plot([0, stime], [0.5, 0.5], c="red", lw=0.5)
+    plt.subplot(212)
+    plt.plot(data[:, 2], c="green", lw=1, ls="dashed")
+    plt.plot(data[:, 4], c="#66aa66", lw=3)
+    plt.plot([0, stime], [1.5, 1.5], c="green", lw=0.5)
+    plt.plot([0, stime], [1, 1], c="green", lw=0.5)
+    plt.plot([0, stime], [0.5, 0.5], c="green", lw=0.5)
+    plt.show()
