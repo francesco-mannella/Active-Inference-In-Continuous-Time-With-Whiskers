@@ -16,7 +16,7 @@ class Sim:
 
     def __init__(self, name):
         self.fig = plt.figure(figsize=(6,6))
-        self.vm = vidManager(self.fig, name=name, dirname=name)
+        self.vm = vidManager(self.fig, name=name, dirname=name, duration=0.1)
         self.ax = self.fig.add_subplot(111, aspect="equal")
 
         head_points = np.array([(-1, -0.75), (0, 1.5), (1, -0.75)])

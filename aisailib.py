@@ -8,7 +8,7 @@ def f(x, a, h):
 
 
 def p2std(p):
-    return 100*np.exp(-p)
+    return 10000*np.exp(-p)
 
 # %%
 
@@ -86,8 +86,8 @@ class GM:
 
     def __init__(self, eta=0.0005, freq=0.001, amp=np.pi/2):
 
-        self.pi_s = 4.5
-        self.pi_x = 4.5
+        self.pi_s = 9
+        self.pi_x = 9
 
         self.mu_x = np.ones(3)
         self.dmu_x = np.ones(3)
@@ -97,9 +97,6 @@ class GM:
         self.eta = eta
         self.h = eta
         self.freq = freq
-
-        self.omega_s = p2std(self.pi_s)
-        self.omega_x = p2std(self.pi_x)
 
     def update(self, sensory_states):
         """ Update dynamics and give action
@@ -115,6 +112,8 @@ class GM:
         # update sensory states and dynamic precision
         self.s = sensory_states
         self.da = self.mu_x[0]
+        self.omega_s = p2std(self.pi_s)
+        self.omega_x = p2std(self.pi_x)
 
         s = self.s
         oms, omx = (self.omega_s, self.omega_x)
@@ -122,6 +121,7 @@ class GM:
         dmx = self.dmu_x
         n = self.mu_nu
         da, fr = self.da, self.freq
+
 
         # TODO: gradient descent optimizations
         self.gd_mu_x = np.array([
@@ -135,7 +135,7 @@ class GM:
             -(1/omx)*(dmx[2] - (n*mx[0] - mx[2]))])
 
         self.gd_mu_nu = -(1/omx)*mx[0]*(n*mx[0] - mx[2] - dmx[2])
-        self.gd_a = (1/oms**2)*da*(s - mx[2])
+        self.gd_a = -(1/oms**2)*da*(s - mx[2])
 
         # dynamics of internal variables
         self.dmu_x[0] = self.freq*self.mu_x[1]
@@ -145,10 +145,8 @@ class GM:
         # update with gradients
         self.dmu_x += self.eta*self.gd_dmu_x
         self.mu_x += self.eta*self.dmu_x + self.h*self.gd_mu_x
-        self.mu_nu += self.eta*self.gd_a
-        # self.mu_nu += self.eta*self.gd_mu_nu
-
-        return self.gd_a
+        self.mu_nu -= self.eta*self.gd_a
+        return -self.gd_a
 
 
 if __name__ == "__main__":
@@ -163,6 +161,7 @@ if __name__ == "__main__":
     stime = 100000
     peaks = 0
     for t in range(stime):
+        gm.mu_nu += 0.1*(t == (stime//8))
         gp.a = np.minimum(1, gp.a)
         gp.update(a)
         s, yg, ym, aa, n = gp.s, gp.mu_x[2], gm.mu_x[2], gp.a, gm.mu_nu
