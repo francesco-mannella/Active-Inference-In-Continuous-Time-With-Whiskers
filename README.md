@@ -4,11 +4,8 @@
 
 <table>
   <tr>
-    <td><img src="demo_normal.gif"/></td>
-    <td><img src="demo_attenuation.gif"/></td>
+    <td><img src="normal.gif"/></td>
+    <td><img src="attenuation.gif"/></td>
   </tr>
-  <tr>
-    <td><img src="demonormal.png"/></td>
-    <td><img src="demoattenuation.png"/></td>
-  </tr>
+
 </table>

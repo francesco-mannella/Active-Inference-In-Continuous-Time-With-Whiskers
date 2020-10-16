@@ -15,7 +15,7 @@ def a2xy(angle, radius=1):
 class Sim:
 
     def __init__(self, name):
-        self.fig = plt.figure(figsize=(6,6))
+        self.fig = plt.figure(figsize=(3, 3))
         self.vm = vidManager(self.fig, name=name, dirname=name, duration=0.1)
         self.ax = self.fig.add_subplot(111, aspect="equal")
 
@@ -50,6 +50,7 @@ class Sim:
 
         self.ax.set_xticks([])
         self.ax.set_yticks([])
+        self.fig.tight_layout()
 
     def set_box(self, pos):
 

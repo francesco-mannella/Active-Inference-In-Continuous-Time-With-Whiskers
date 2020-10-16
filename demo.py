@@ -1,3 +1,4 @@
+from plotter import Plotter
 import matplotlib.patches as patches
 from sim import Sim
 from aisailib import GP, GM
@@ -10,13 +11,21 @@ matplotlib.use("Agg")
 for type in ["normal", "attenuation"]:
 
     # %%
+    stime = 145000
+
     gp = GP(eta=0.0005, freq=0.5, amp=0.8)
     gm = GM(eta=0.0005, freq=0.5, amp=0.8)
     sim = Sim("demo_"+type)
 
+    genProcPlot = Plotter("gen_proc_"+type,
+                          {"x": "proprioception", "nu": "action"},
+                          color=[.5, .2, 0], stime=stime)
+
+    genModPlot = Plotter("gen_mod_"+type,
+                         {"x": "proprioception", "nu": "internal cause"},
+                         color=[.2, .5, 0], stime=stime)
     # %%
     delta_action = 0
-    stime = 145000
 
     sens = np.zeros(stime)
     ampl = np.zeros(stime)
@@ -53,36 +62,40 @@ for type in ["normal", "attenuation"]:
         if t % 1200 == 0 or t == stime - 1:
             if peaks > peaks_max:
                 sim.set_box([0, 1.48])
-            sim.update(0.3*np.pi*sens[t], 0.3*np.pi*sens_model[t])
+            sim.update(0.3*np.pi*sens[t],
+                       0.3*np.pi*sens_model[t])
+            genProcPlot.update([0.3*np.pi*sens[t],
+                                0.3*np.pi*ampl[t]], t)
+            genModPlot.update([0.3*np.pi*sens_model[t],
+                               0.3*np.pi*ampl_model[t]], t)
     sim.close()
 
-    plt.figure(figsize=(10, 6))
-    plt.subplot(211)
-    plt.title("Generative process")
-    s, = plt.plot(sens, c="red", lw=1, ls="dashed")
-    a, = plt.plot(ampl, c="#aa6666", lw=3)
-    plt.plot([0, stime], [1.5, 1.5], c="red", lw=0.5)
-    plt.plot([0, stime], [1, 1], c="red", lw=0.5)
-    plt.plot([0, stime], [0.5, 0.5], c="red", lw=0.5)
-    plt.text(box_time-(stime//20), 1.7, "box added")
-    plt.plot([box_time, box_time], [-4, 4], c="black", lw=0.3)
-    plt.xticks([])
-    plt.legend([s, a], ["proprioception (current angle)",
-                        "action (amplitude)"])
-    ax = plt.subplot(212)
-    x, = plt.plot(sens_model, c="green", lw=1, ls="dashed")
-    n, = plt.plot(ampl_model, c="#66aa66", lw=3)
-    plt.plot([0, stime], [1.5, 1.5], c="green", lw=0.5)
-    plt.plot([0, stime], [1, 1], c="green", lw=0.5)
-    plt.plot([0, stime], [0.5, 0.5], c="green", lw=0.5)
-    plt.text(stime//4-(stime//20), sens_model[stime//4] + 0.2, "model changed")
-    plt.scatter(stime//4, sens_model[stime//4], c="green", s=100)
-    if type != "normal":
-        rect = patches.Rectangle((3*stime//8, -1.5), 2*stime//8, 3,
-                                 edgecolor='none', facecolor=[.6, .6,.6, .3])
-        ax.add_patch(rect)
-
-
-    plt.legend([x, n], ["proprioception (current angle)",
-                        "internal cause (amplitude)"])
-    plt.savefig("demo"+type+".png")
+    # plt.figure(figsize=(10, 6))
+    # plt.subplot(211)
+    # plt.title("Generative process")
+    # s, = plt.plot(sens, c="red", lw=1, ls="dashed")
+    # a, = plt.plot(ampl, c="#aa6666", lw=3)
+    # plt.plot([0, stime], [1.5, 1.5], c="red", lw=0.5)
+    # plt.plot([0, stime], [1, 1], c="red", lw=0.5)
+    # plt.plot([0, stime], [0.5, 0.5], c="red", lw=0.5)
+    # plt.text(box_time-(stime//20), 1.7, "box added")
+    # plt.plot([box_time, box_time], [-4, 4], c="black", lw=0.3)
+    # plt.xticks([])
+    # plt.legend([s, a], ["proprioception (current angle)",
+    #                     "action (amplitude)"])
+    # ax = plt.subplot(212)
+    # x, = plt.plot(sens_model, c="green", lw=1, ls="dashed")
+    # n, = plt.plot(ampl_model, c="#66aa66", lw=3)
+    # plt.plot([0, stime], [1.5, 1.5], c="green", lw=0.5)
+    # plt.plot([0, stime], [1, 1], c="green", lw=0.5)
+    # plt.plot([0, stime], [0.5, 0.5], c="green", lw=0.5)
+    # plt.text(stime//4-(stime//20), sens_model[stime//4] + 0.2, "model changed")
+    # plt.scatter(stime//4, sens_model[stime//4], c="green", s=100)
+    # if type != "normal":
+    #     rect = patches.Rectangle((3*stime//8, -1.5), 2*stime//8, 3,
+    #                              edgecolor='none', facecolor=[.6, .6, .6, .3])
+    #     ax.add_patch(rect)
+    #
+    # plt.legend([x, n], ["proprioception (current angle)",
+    #                     "internal cause (amplitude)"])
+    # plt.savefig("demo"+type+".png")
