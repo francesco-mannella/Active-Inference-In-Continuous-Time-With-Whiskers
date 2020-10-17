@@ -13,7 +13,7 @@
     </ui>
     </td>
     <td>
-    <li> Sensory attenuation avoids modifiications of the internal model even though world constraints exist </li>
+    <li> Sensory attenuation avoids modifications of the internal model even though world constraints exist </li>
     </td>
     </tr>
     <t>    
