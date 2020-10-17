@@ -15,7 +15,7 @@ def a2xy(angle, radius=1):
 class Sim:
 
     def __init__(self, name):
-        self.fig = plt.figure(figsize=(3, 3))
+        self.fig = plt.figure(figsize=(5, 5))
         self.vm = vidManager(self.fig, name=name, dirname=name, duration=0.1)
         self.ax = self.fig.add_subplot(111, aspect="equal")
 
