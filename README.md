@@ -1,6 +1,5 @@
 # Active-Inference-In-Continuous-Time-With-Whiskers
-
-<img src="model.png" width="50%"/>
+<img src="model.svg" width="30%"/>
 
 ## Demonstation of model behaviour
 
