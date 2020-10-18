@@ -1,4 +1,4 @@
-from plotter import Plotter
+from plotter import Plotter, PredErrPlotter
 from sim import Sim
 from aisailib import GP, GM
 import matplotlib.pyplot as plt
@@ -10,7 +10,8 @@ import matplotlib
 def attenuation(stime):
     t = np.arange(stime)
     s = (3*(stime//8) < t) & (t < 5*(stime//8))
-    s = np.convolve(s, np.exp(-0.5*np.linspace(-3, 3, stime//10)**2), mode="same")
+    s = np.convolve(s, np.exp(-0.5*np.linspace(-3, 3, stime//10)**2),
+                    mode="same")
     return s/np.max(s)
 
 
@@ -21,6 +22,7 @@ for type in ["normal", "attenuation"]:
     gm = GM(eta=0.0005, freq=0.5, amp=0.8)
 
     sim = Sim("demo_"+type)
+    prederr = PredErrPlotter("prederr", type, stime)
     genProcPlot = Plotter("gen_proc_"+type, type="process",
                           wallcolor=[0.2, 0.2, 0, 0.2],
                           labels={"x": "proprioception", "nu": "action"},
@@ -38,7 +40,6 @@ for type in ["normal", "attenuation"]:
     sens_model = np.zeros(stime)
     ampl_model = np.zeros(stime)
     sigma_s = attenuation(stime)
-
 
     peaks = 0
     peaks_max = 2
@@ -60,9 +61,9 @@ for type in ["normal", "attenuation"]:
 
         delta_action = gm.update(sens[t])
 
-        if t == stime//4 and type=="normal":
+        if t == stime//4 and type == "normal":
             genModPlot.plot_first(t)
-        if t == box_time and type=="normal":
+        if t == box_time and type == "normal":
             genProcPlot.plot_second(t)
 
         if len(sens[:t+1]) >= 2:
@@ -76,12 +77,12 @@ for type in ["normal", "attenuation"]:
                 sim.set_box([0, 1.48])
             sim.update(0.3*np.pi*sens[t],
                        0.3*np.pi*sens_model[t])
+            prederr.update([0.3*np.pi*sens[t], 0.3*np.pi*sens_model[t]], t)
             genProcPlot.update([0.3*np.pi*sens[t],
                                 0.3*np.pi*ampl[t],
-                                t>box_time,
+                                t > box_time,
                                 0], t)
             genModPlot.update([0.3*np.pi*sens_model[t],
                                0.3*np.pi*ampl_model[t],
-                               t>box_time,
-                               sigma_s[t]*3 if type!= "normal" else 0], t)
-    sim.close()
+                               t > box_time,
+                               sigma_s[t]*3 if type != "normal" else 0], t)

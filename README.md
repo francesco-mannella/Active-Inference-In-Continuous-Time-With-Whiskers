@@ -8,7 +8,7 @@
 <img src="model.svg" width="100%"/>
 </td>
 <td>
-<img src="description_gm.svg" width="1000em"/>
+<img src="description_gm.svg" width="1200em"/>
 </td>
 </tr>
 </table>

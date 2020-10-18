@@ -1,11 +1,8 @@
-import matplotlib
 from mkvideo import vidManager
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
-import matplotlib.patches as mpatches
 Path = mpath.Path
-# matplotlib.use("Agg")
 
 
 class Plotter:
@@ -66,16 +63,46 @@ class Plotter:
         self.vm.save_frame()
 
     def plot_first(self, t):
-        self.ax.scatter(t, 2, s=300, facecolor=[0, 0, 0, 0], edgecolor=[0, 0, 0, 1])
+        self.ax.scatter(t, 2, s=300, facecolor=[0, 0, 0, 0],
+                        edgecolor=[0, 0, 0, 1])
         self.ax.text(t, 2, "1",
-        horizontalalignment="center",
-        verticalalignment="center")
+                     horizontalalignment="center",
+                     verticalalignment="center")
 
     def plot_second(self, t):
-        self.ax.scatter(t, 2, s=300, facecolor=[0, 0, 0, 0], edgecolor=[0, 0, 0, 1])
+        self.ax.scatter(t, 2, s=300, facecolor=[0, 0, 0, 0],
+                        edgecolor=[0, 0, 0, 1])
         self.ax.text(t, 2, "2",
-        horizontalalignment="center",
-        verticalalignment="center")
+                     horizontalalignment="center",
+                     verticalalignment="center")
 
     def close(self):
         self.vm.mk_video()
+
+
+class PredErrPlotter:
+    def __init__(self, name, type, stime):
+        self.fig = plt.figure(figsize=(5, 1.5))
+        self.vm = vidManager(self.fig, name=name+"_"+type,
+                             dirname=name+"_"+type, duration=1)
+        self.ax = self.fig.add_subplot(111)
+        self.ax.set_title("Prediction error")
+        self.pe, = self.ax.plot(0, 0, c="k", lw=1)
+        self.pe_head = self.ax.scatter(0, 0, c="k", s=60)
+        self.ax.set_xlim([-0.1*stime, stime*1.1])
+        self.ax.set_ylim([-0.2, 0.5])
+        self.ax.set_yticks([-1, 0, 1])
+        self.ax.set_xticks([])
+        self.pe_array = []
+        self.T = []
+        self.fig.tight_layout()
+
+    def update(self, vals, t):
+        gs, ms = vals
+        self.pe_array.append(ms-gs)
+        self.T.append(t)
+
+        self.pe.set_data(self.T, self.pe_array)
+        self.pe_head.set_offsets([[self.T[-1], self.pe_array[-1]]])
+        self.fig.canvas.draw()
+        self.vm.save_frame()

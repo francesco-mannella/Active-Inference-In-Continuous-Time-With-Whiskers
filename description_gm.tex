@@ -7,41 +7,30 @@
 \linespread{1.5}
 
 \begin{document}
-\Huge
-% $$
-%   F&=&p(s|\mu_x)p(\mu_x'|\mu_x,\nu)\\
-%   s &=& \mu_{x_3} + \omega_s  \\
-%   \dot{\mathbf{x}} &=&
-%   \left[\begin{array}{c}
-%   \phi\mu_{x_2} \\
-%   -\mu_{x_1} \\
-%   \mu_{\nu}\mu_{x_1} - \mu_{x_3} \\
-%   \end{array}\right] +\boldsymbol{\omega_x} \\
-%   \nu &=& \mu_{\nu} + \omega_{\nu}
-% $$
-\begin{minipage}[t]{\textwidth}
-\begin{minipage}[t]{\textwidth}
+\huge
 
+\begin{minipage}[t]{15cm}
+\begin{minipage}[t]{15cm}
 $
-\begin{array}{ccc}
-    \dot{\mathbf{x}} &=&
+\begin{array}{rllll}
+    \dot{\mathbf{x}} &=& f(\boldsymbol{x}, \nu) + \boldsymbol{\omega_s} &=&
     \left[\begin{array}{c}
         \phi x_2 \\
         -x_1 \\
         \nu x_1 - x_3 \\
     \end{array}\right] +\boldsymbol{\omega_x}\\
-    s &=& x_3 + \omega_s  \\
-    \nu &=& \nu + \omega_{\nu}\\
+    s &=& g(\boldsymbol{x}) + \omega_s &=& x_3 + \omega_s \\
+    \nu &=& \nu + \omega_{\nu}&&\\
 \end{array}
 $
 \end{minipage}
 \vspace{0.1in}
 \\
-\begin{minipage}[t]{\textwidth}
+\begin{minipage}[t]{15cm}
 $
 \begin{array}{ccl}
-    \boldsymbol{x} &\rightarrow& \boldsymbol{x} + dt\left(\boldsymbol{\dot{x}}
-    -\eta\frac{\partial F}{\partial \boldsymbol{x}}\right) \\
+    \boldsymbol{x} &\rightarrow& \boldsymbol{x} + dt\boldsymbol{\dot{x}}
+    -\eta\frac{\partial F}{\partial \boldsymbol{x}} \\
     \boldsymbol{\dot{x}} &\rightarrow& \boldsymbol{\dot{x}}
     -\eta\frac{\partial F}{\partial \boldsymbol{\dot{x}}} \\
     a &\rightarrow& a -\eta\frac{\partial F}{\partial a} \\

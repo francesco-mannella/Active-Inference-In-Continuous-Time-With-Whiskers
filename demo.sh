@@ -14,16 +14,21 @@ for i in $(seq 0 121); do
     demo_normal/demo_normal${n}.png \
     gen_proc_normal/gen_proc_normal${n}.png \
     gen_mod_normal/gen_mod_normal${n}.png \
+    prederr_normal/prederr_normal${n}.png \
     -append normal/normal${n}.png
 
   convert -scale 400 -antialias  \
     demo_attenuation/demo_attenuation${n}.png \
     gen_proc_attenuation/gen_proc_attenuation${n}.png \
     gen_mod_attenuation/gen_mod_attenuation${n}.png \
+    prederr_attenuation/prederr_attenuation${n}.png \
     -append attenuation/attenuation${n}.png
 done
 echo "videos"
-convert -loop 0 -delay 5 normal/* normal.gif
-convert -loop 0 -delay 5 attenuation/* attenuation.gif
+convert -loop 0 -delay 5 normal/normal* normal.gif
+convert -loop 0 -delay 5 attenuation/attenuation* attenuation.gif
+convert -loop 0 -delay 5 prederr_normal/prederr_normal* prederr_normal.gif
+convert -loop 0 -delay 5 prederr_attenuation/prederr_attenuation* \
+    prederr_attenuation.gif
 echo "clear"
-rm -r gen_* demo_* attenuation normal
+rm -r gen_* demo_* attenuation normal prederr_*
