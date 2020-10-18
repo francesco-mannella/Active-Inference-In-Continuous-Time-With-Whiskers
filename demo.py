@@ -1,10 +1,7 @@
 from plotter import Plotter, PredErrPlotter
 from sim import Sim
 from aisailib import GP, GM
-import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib
-# matplotlib.use("Agg")
 
 
 def attenuation(stime):
@@ -25,12 +22,14 @@ for type in ["normal", "attenuation"]:
     prederr = PredErrPlotter("prederr", type, stime)
     genProcPlot = Plotter("gen_proc_"+type, type="process",
                           wallcolor=[0.2, 0.2, 0, 0.2],
-                          labels={"x": "proprioception", "nu": "action"},
+                          labels={"x": "proprioception",
+                                  "nu": "action"},
                           color=[.5, .2, 0], stime=stime)
 
     genModPlot = Plotter("gen_mod_"+type, type="model",
                          wallcolor=[0, 0, 0, 0],
-                         labels={"x": "proprioception", "nu": "internal cause"},
+                         labels={"x": "proprioception",
+                                 "nu": "internal cause"},
                          color=[.2, .5, 0], stime=stime)
 
     delta_action = 0
