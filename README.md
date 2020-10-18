@@ -1,7 +1,8 @@
 
 # Active-Inference-In-Continuous-Time-With-Whiskers
 
-<table width="100%">
+## Model description
+<table>
 <tr>
 <td>
 <img src="model.svg" width="100%"/>
@@ -10,10 +11,10 @@
 <img src="description_gm.svg" width="1000em"/>
 </td>
 </tr>
+</table>
 
 ## Demonstation of model behaviour
-
-<table width="100%">
+<table>
   <tr>
     <td width="50%">
     <ui style="list-style-position: outside">
