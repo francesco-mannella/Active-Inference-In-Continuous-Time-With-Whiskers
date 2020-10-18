@@ -1,5 +1,15 @@
+
 # Active-Inference-In-Continuous-Time-With-Whiskers
-<img src="model.svg" width="30%"/>
+
+<table width="100%">
+<tr>
+<td>
+<img src="model.svg" width="100%"/>
+</td>
+<td>
+<img src="description_gm.svg" width="1000em"/>
+</td>
+</tr>
 
 ## Demonstation of model behaviour
 
