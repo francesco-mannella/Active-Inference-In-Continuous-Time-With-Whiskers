@@ -16,14 +16,9 @@
 ## Demonstation of model behaviour
 <table>
   <tr>
-    <td>
-    <li> Sensory attenuation avoids modifications of the internal model even though world constraints exist </li>
+    <td><img src="pics/normal.gif" width="100%"/>
     </td>
-    </tr>
-    <t>    
-    <td>
-    <img src="pics/normal.gif" width="100%"/></td>
-    <td><img src="pics/large.gif" width="100%"/></td>
+    <td><img src="pics/large.gif" width="100%"/>
+    </td>
   </tr>
-
 </table>
