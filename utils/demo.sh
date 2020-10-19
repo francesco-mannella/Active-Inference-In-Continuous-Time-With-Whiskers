@@ -30,7 +30,7 @@ for i in $(seq 0 121); do
 done
 echo "videos"
 for type in $TYPE{1,2,3}; do
-  convert -loop 0 -delay 5 ${type}/${type}* ${MAIN_DIR}/pics/${type}.gif
+  convert -loop 0 -delay 20 ${type}/${type}* ${MAIN_DIR}/pics/${type}.gif
 done
 
 echo "clear"
