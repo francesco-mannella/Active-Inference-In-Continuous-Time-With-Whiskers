@@ -35,7 +35,7 @@ for type in ["normal", "large", "still"]:
     gm = GM(eta=0.0005, freq=0.5, amp=1.2)
 
     sim = Sim("demo_"+type, points=normal_box
-              if type == "normal" or type=="still" else normal_box)
+              if type == "normal" or type=="still" else large_box)
     prederr = PredErrPlotter("prederr", type, stime)
     genProcPlot = Plotter("gen_proc_"+type, type="process",
                           wallcolor=[0.2, 0.2, 0, 0.2],
