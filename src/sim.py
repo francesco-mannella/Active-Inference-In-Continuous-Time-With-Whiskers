@@ -14,7 +14,7 @@ def a2xy(angle, radius=1):
 
 class Sim:
 
-    def __init__(self, name):
+    def __init__(self, name, points):
         self.fig = plt.figure(figsize=(5, 5))
         self.vm = vidManager(self.fig, name=name, dirname=name, duration=0.1)
         self.ax = self.fig.add_subplot(111, aspect="equal")
@@ -45,21 +45,21 @@ class Sim:
 
         self.angle = None
         self.box = None
+        self.box_points_init = np.array(points)
         self.box_pos = 3
-        self.set_box([0, self.box_pos])
+        self.move_box([0, self.box_pos])
+        self.set_box()
 
         self.ax.set_xticks([])
         self.ax.set_yticks([])
         self.fig.tight_layout()
 
-    def set_box(self, pos):
+    def move_box(self, pos):
+        self.box_points = self.box_points_init + pos
 
+    def set_box(self):
         if self.box is not None:
             self.box.remove()
-
-        self.box_points = np.array([
-            (-0.8, -.5), (0.8, -.5),
-            (0.8, 2.5), (-0.8, 2.5)]) + pos
         box_shape = mpatches.PathPatch(
             Path(np.vstack([self.box_points, (0, 0)]),
                  [Path.MOVETO, Path.LINETO,
@@ -80,8 +80,8 @@ class Sim:
         self.whisker_model.set_data(*vertices.T)
 
     def update(self, angle, angle_model):
-        angle += 0.2*np.pi
-        angle_model += 0.2*np.pi
+        angle = (0.3*angle + 0.2)*np.pi
+        angle_model = (0.3*angle_model+0.2)*np.pi
         self.set_whisker(angle)
         self.set_whisker_model(angle_model)
         self.fig.canvas.draw()
@@ -96,7 +96,5 @@ if __name__ == "__main__":
     sim = Sim("demo")
     sim.set_box([0, 1.3])
     for a in np.linspace(0, 50*np.pi, 1000):
-        sim.update(0.3*np.pi*np.sin(a), 0.3*np.pi*np.sin(a))
-        # if np.abs(np.sin(a) - 0.5) < 0.3:
-        #    input()
+        sim.update(np.sin(a), np.sin(a))
     sim.close()

@@ -1,34 +1,37 @@
 #!/bin/bash
+
+MAIN_DIR="$(dirname $(realpath $0) | sed -e 's/\utils//')"
+
+cd $MAIN_DIR
+cd src
+
+TYPE1=normal
+TYPE2=large
+TYPE3=still
+
 echo "demo"
 python demo.py
-mkdir -p normal
-mkdir -p attenuation
-rm -f normal/* attenuation/*
-
+mkdir -p ${TYPE1} ${TYPE2} ${TYPE3}
+rm -f ${TYPE1}/* ${TYPE2}/* ${TYPE3}/*
 for i in $(seq 0 121); do
 
   echo "convert frame $i"
   n=$(echo $i |xargs printf "%08d")
 
-  convert -scale 400 -antialias  \
-    demo_normal/demo_normal${n}.png \
-    gen_proc_normal/gen_proc_normal${n}.png \
-    gen_mod_normal/gen_mod_normal${n}.png \
-    prederr_normal/prederr_normal${n}.png \
-    -append normal/normal${n}.png
+  for type in $TYPE{1,2,3}; do
+    convert -scale 400 -antialias  \
+    demo_${type}/demo_${type}${n}.png \
+    gen_proc_${type}/gen_proc_${type}${n}.png \
+    gen_mod_${type}/gen_mod_${type}${n}.png \
+    prederr_${type}/prederr_${type}${n}.png \
+    -append ${type}/${type}${n}.png
+  done
 
-  convert -scale 400 -antialias  \
-    demo_attenuation/demo_attenuation${n}.png \
-    gen_proc_attenuation/gen_proc_attenuation${n}.png \
-    gen_mod_attenuation/gen_mod_attenuation${n}.png \
-    prederr_attenuation/prederr_attenuation${n}.png \
-    -append attenuation/attenuation${n}.png
 done
 echo "videos"
-convert -loop 0 -delay 5 normal/normal* normal.gif
-convert -loop 0 -delay 5 attenuation/attenuation* attenuation.gif
-convert -loop 0 -delay 5 prederr_normal/prederr_normal* prederr_normal.gif
-convert -loop 0 -delay 5 prederr_attenuation/prederr_attenuation* \
-    prederr_attenuation.gif
+for type in $TYPE{1,2,3}; do
+  convert -loop 0 -delay 5 ${type}/${type}* ${MAIN_DIR}/pics/${type}.gif
+done
+
 echo "clear"
-rm -r gen_* demo_* attenuation normal prederr_*
+rm -r gen_* demo_* $TYPE{1,2,3} prederr_*

@@ -4,21 +4,38 @@ from aisailib import GP, GM
 import numpy as np
 
 
-def attenuation(stime):
-    t = np.arange(stime)
-    s = (3*(stime//8) < t) & (t < 5*(stime//8))
-    s = np.convolve(s, np.exp(-0.5*np.linspace(-3, 3, stime//10)**2),
-                    mode="same")
-    return s/np.max(s)
+def ik_angle(origin, point):
+    x, y = np.vstack([origin, point])
+    angle = 0
+    dx = (y[0] - x[0])
+    dy = (y[1] - x[1])
+    if np.abs(dx) > 1e-30:
+        aa = dy/dx
+        angle = np.arctan(aa)
+
+        # if dx < 0 and dy > 0:
+        #     angle = 0.5*np.pi - angle
+        # if dx < 0 and dy < 0:
+        #     angle = np.pi + angle
+        # if dx > 0 and dy < 0:
+        #     angle = 1.5*np.pi - angle
+    return angle
 
 
-for type in ["normal", "attenuation"]:
+normal_box = [
+    (-0.8, -.5), (0.8, -.5),
+    (0.8, 2.5), (-0.8, 2.5)]
+large_box = [
+    (-1.3, -.5), (1.3, -.5),
+    (1.3, 2.5), (-1.3, 2.5)]
+for type in ["normal", "large", "still"]:
     stime = 145000
 
-    gp = GP(eta=0.0005, freq=0.5, amp=0.8)
-    gm = GM(eta=0.0005, freq=0.5, amp=0.8)
+    gp = GP(eta=0.0005, freq=0.5, amp=1.2)
+    gm = GM(eta=0.0005, freq=0.5, amp=1.2)
 
-    sim = Sim("demo_"+type)
+    sim = Sim("demo_"+type, points=normal_box
+              if type == "normal" or type=="still" else normal_box)
     prederr = PredErrPlotter("prederr", type, stime)
     genProcPlot = Plotter("gen_proc_"+type, type="process",
                           wallcolor=[0.2, 0.2, 0, 0.2],
@@ -38,20 +55,21 @@ for type in ["normal", "attenuation"]:
     ampl = np.zeros(stime)
     sens_model = np.zeros(stime)
     ampl_model = np.zeros(stime)
-    sigma_s = attenuation(stime)
 
-    peaks = 0
-    peaks_max = 2
-    box_time = 1000*stime
     for t in range(stime):
 
-        gp.update(delta_action)
-        gm.mu_x[2] += -1*(t == (stime//4))
-        if type != "normal":
-            gm.pi_s = 9 - 8.9*sigma_s[t]
+        if type=="normal" or type=="large":
+            box_pos = np.array([0, np.maximum(1.3, 2.5*np.exp(-2*t/stime)+0.7)])
+        else:
+            box_pos = np.array([0, 5]) if t<=stime/3 else np.array([0, 1.48])
+            
+        sim.move_box(box_pos)
 
-        if t > box_time:
-            gp.mu_x[2] = np.minimum(0.5, gp.mu_x[2])
+        angle = ik_angle(sim.whisker_base, sim.box_points[0])
+
+        gp.update(delta_action)
+
+        gp.mu_x[2] = np.minimum(np.abs(angle+0.2*np.pi), gp.mu_x[2])
 
         sens[t] = gp.mu_x[2]
         sens_model[t] = gm.mu_x[2]
@@ -60,28 +78,10 @@ for type in ["normal", "attenuation"]:
 
         delta_action = gm.update(sens[t])
 
-        if t == stime//4 and type == "normal":
-            genModPlot.plot_first(t)
-        if t == box_time and type == "normal":
-            genProcPlot.plot_second(t)
-
-        if len(sens[:t+1]) >= 2:
-            dd = np.sum(2*(sens[t-1:t+1] > 0)-1)
-            if dd == 0 and sens[t-1] > 0:
-                peaks += 1
-                if peaks == peaks_max+1:
-                    box_time = t + stime//6
         if t % 1200 == 0 or t == stime - 1:
-            if t > box_time:
-                sim.set_box([0, 1.48])
-            sim.update(0.3*np.pi*sens[t],
-                       0.3*np.pi*sens_model[t])
-            prederr.update([0.3*np.pi*sens[t], 0.3*np.pi*sens_model[t]], t)
-            genProcPlot.update([0.3*np.pi*sens[t],
-                                0.3*np.pi*ampl[t],
-                                t > box_time,
-                                0], t)
-            genModPlot.update([0.3*np.pi*sens_model[t],
-                               0.3*np.pi*ampl_model[t],
-                               t > box_time,
-                               sigma_s[t]*3 if type != "normal" else 0], t)
+
+            sim.set_box()
+            sim.update(sens[t], sens_model[t])
+            prederr.update([sens[t], sens_model[t]], t)
+            genProcPlot.update([sens[t], ampl[t], 0, 0], t)
+            genModPlot.update([sens_model[t], ampl_model[t], 0, 0], t)
