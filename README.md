@@ -1,14 +1,14 @@
 
-# Active-Inference-In-Continuous-Time-With-Whiskers
+# Active Inference In Continuous Time With Whiskers
 
 ## Model description
 <table>
 <tr>
 <td>
-<img src="model.svg" width="100%"/>
+<img src="pics/model.svg" width="100%"/>
 </td>
 <td>
-<img src="description_gm.svg" width="1200em"/>
+<img src="pics/description_gm.svg" width="1200em"/>
 </td>
 </tr>
 </table>
@@ -30,8 +30,8 @@
     </tr>
     <t>    
     <td>
-    <img src="normal.gif" width="100%"/></td>
-    <td><img src="attenuation.gif" width="100%"/></td>
+    <img src="pics/normal.gif" width="100%"/></td>
+    <td><img src="pics/attenuation.gif" width="100%"/></td>
   </tr>
 
 </table>
