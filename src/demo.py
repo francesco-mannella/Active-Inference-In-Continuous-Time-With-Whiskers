@@ -59,15 +59,18 @@ for type in ["normal", "large", "still"]:
     for t in range(stime):
 
         if type == "normal" or type == "large":
-            box_pos = np.array([0, np.maximum(1.3, 2.5*np.exp(-3*t/stime)+0.7)])
+            box_pos = np.array([0,
+                                np.maximum(1.3, 2.2*np.exp(-3*t/stime)+0.7)])
         else:
-            box_pos = np.array([0, 5]) if t < stime/3 else np.array([0, 1.48])
+            box_pos = np.array([0, 5]) if t < stime*(35/100) \
+                else np.array([0, 1.48])
 
         sim.move_box(box_pos)
 
         angle = ik_angle(sim.whisker_base, sim.box_points[0])
         angle = np.abs(angle+0.2*np.pi)
-        min_pos = + sim.whisker_base[1] + sim.whisker_len - sim.box_points_init[0][1]
+        min_pos = + sim.whisker_base[1] + sim.whisker_len - \
+            sim.box_points_init[0][1]
         angle_pos = angle if box_pos[1] < min_pos else 10
 
         gp.update(delta_action)
