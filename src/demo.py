@@ -29,6 +29,9 @@ large_box = [
     (-1.3, -.5), (1.3, -.5),
     (1.3, 2.5), (-1.3, 2.5)]
 for type in ["normal", "large", "still"]:
+
+    print("simulating",type,"...")
+
     stime = 180000
 
     gp = GP(eta=0.0005, freq=0.5, amp=1.2)
@@ -56,6 +59,7 @@ for type in ["normal", "large", "still"]:
     sens_model = np.zeros(stime)
     ampl_model = np.zeros(stime)
 
+    frame = 0
     for t in range(stime):
 
         if type == "normal" or type == "large":
@@ -85,6 +89,9 @@ for type in ["normal", "large", "still"]:
         delta_action = gm.update(sens[t])
 
         if t % 1200 == 0 or t == stime - 1:
+
+            print(frame)
+            frame +=1
 
             sim.set_box()
             sim.update(sens[t], sens_model[t])

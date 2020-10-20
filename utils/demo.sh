@@ -15,11 +15,10 @@ echo "demo"
 python demo.py
 mkdir -p ${TYPE1} ${TYPE2} ${TYPE3}
 rm -f ${TYPE1}/* ${TYPE2}/* ${TYPE3}/*
-for i in $(seq 0 121); do
-
+N=$(echo "$(ls demo_${TYPE1}/demo_*| wc -l) -1"| bc)
+for i in $(seq 0 $N); do
   echo "convert frame $i"
   n=$(echo $i |xargs printf "%08d")
-
   for type in $TYPE{1,2,3}; do
     convert -scale 400 -antialias  \
     demo_${type}/demo_${type}${n}.png \
@@ -28,8 +27,13 @@ for i in $(seq 0 121); do
     prederr_${type}/prederr_${type}${n}.png \
     -append ${type}/${type}${n}.png
   done
-
 done
+
+# screenshots
+for type in $TYPE{1,2,3}; do
+  cp ${type}/${type}*${N}.png ${MAIN_DIR}/pics/${type}.png
+done
+
 echo "videos"
 for type in $TYPE{1,2,3}; do
   convert -loop 0 -delay 20 ${type}/${type}* ${MAIN_DIR}/pics/${type}.gif
