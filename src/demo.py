@@ -88,5 +88,5 @@ for type in ["normal", "large", "still"]:
             prederr.update([sens[t], sens_model[t]], t)
             genProcPlot.update([sens[t], ampl[t],
                                 angle if box_pos[1] < min_pos else None, 0], t)
-            genModPlot.update([sens_model[t],
-                               angle if box_pos[1] < min_pos else None, 99, 0], t)
+            genModPlot.update([sens_model[t], ampl_model[t],
+                               angle if box_pos[1] < min_pos else None, 99], t)
