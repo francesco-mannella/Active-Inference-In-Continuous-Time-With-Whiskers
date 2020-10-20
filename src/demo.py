@@ -62,7 +62,7 @@ for type in ["normal", "large", "still"]:
             box_pos = np.array([0,
                                 np.maximum(1.3, 2.2*np.exp(-3*t/stime)+0.7)])
         else:
-            box_pos = np.array([0, 5]) if t < stime*(35/100) \
+            box_pos = np.array([0, 5]) if t < stime*(40/100) \
                 else np.array([0, 1.48])
 
         sim.move_box(box_pos)
