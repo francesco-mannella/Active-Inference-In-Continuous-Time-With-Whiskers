@@ -41,7 +41,7 @@ for type in ["normal", "large", "still"]:
 
     genModPlot = Plotter("gen_mod_"+type, type="model",
                          wallcolor=[0, 0, 0, 0],
-                         labels={"x": "proprioception",
+                         labels={"x": "proprioception prediction",
                                  "nu": "internal cause (repr. oscill. ampl.)"},
                          color=[.2, .5, 0], stime=stime)
 
