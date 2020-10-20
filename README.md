@@ -15,7 +15,7 @@
 
 ## Demonstation of model behaviour
 <table>
-  <tr>
+  <tr height=100em>
     <td width="50%">
     <ui style="list-style-position: outside">
     <li >1 Dof: amplitude of oscillation </li>
