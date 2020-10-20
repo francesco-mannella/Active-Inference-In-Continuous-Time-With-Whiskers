@@ -12,13 +12,6 @@ def ik_angle(origin, point):
     if np.abs(dx) > 1e-30:
         aa = dy/dx
         angle = np.arctan(aa)
-
-        # if dx < 0 and dy > 0:
-        #     angle = 0.5*np.pi - angle
-        # if dx < 0 and dy < 0:
-        #     angle = np.pi + angle
-        # if dx > 0 and dy < 0:
-        #     angle = 1.5*np.pi - angle
     return angle
 
 
@@ -62,32 +55,34 @@ for type in ["normal", "large", "still"]:
     frame = 0
     for t in range(stime):
 
+        # compute box position and collision
         if type == "normal" or type == "large":
             box_pos = np.array([0,
                                 np.maximum(1.3, 2.2*np.exp(-3*t/stime)+0.7)])
         else:
             box_pos = np.array([0, 5]) if t < stime*(36/100) \
                 else np.array([0, 1.48])
-
         sim.move_box(box_pos)
-
         angle = ik_angle(sim.whisker_base, sim.box_points[0])
         angle = np.abs(angle+0.2*np.pi)
         min_pos = + sim.whisker_base[1] + sim.whisker_len - \
             sim.box_points_init[0][1]
         angle_pos = angle if box_pos[1] < min_pos else 10
 
+        # update process
         gp.update(delta_action)
-
         gp.mu_x[2] = np.minimum(angle_pos, gp.mu_x[2])
 
+        # get state
         sens[t] = gp.mu_x[2]
         sens_model[t] = gm.mu_x[2]
         ampl[t] = gp.a
         ampl_model[t] = gm.mu_nu
 
+        # update model and action
         delta_action = gm.update(sens[t])
 
+        # plot
         if t % 1200 == 0 or t == stime - 1:
 
             print(frame)
