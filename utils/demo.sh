@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 MAIN_DIR="$(dirname $(realpath $0) | sed -e 's/\utils//')"
 
 cd $MAIN_DIR

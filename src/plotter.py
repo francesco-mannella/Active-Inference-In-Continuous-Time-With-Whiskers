@@ -40,8 +40,7 @@ class Plotter:
         self.x_array.append(s)
         self.sigma_array.append(o)
         self.nu_array.append(a)
-        if w is True:
-            self.wall_array.append(t)
+        self.wall_array.append(w)
         self.T.append(t)
         if self.sigma_fill is not None:
             self.sigma_fill.remove()
@@ -58,7 +57,7 @@ class Plotter:
         self.x_head.set_offsets([[t, self.x_array[-1]]])
         self.nu.set_data(self.T, self.nu_array)
         self.nu_head.set_offsets([[t, self.nu_array[-1]]])
-        self.wall.set_data(self.wall_array, 0.5*np.ones_like(self.wall_array))
+        self.wall.set_data(self.T, self.wall_array)
         self.fig.canvas.draw()
         self.vm.save_frame()
 
@@ -91,7 +90,7 @@ class PredErrPlotter:
         self.pe_head = self.ax.scatter(0, 0, c="k", s=60)
         self.ax.set_xlim([-0.1*stime, stime*1.1])
         self.ax.set_ylim([-0.2, 0.5])
-        self.ax.set_yticks([-1, 0, 1])
+        self.ax.set_yticks([-0.1, 0, 0.5])
         self.ax.set_xticks([])
         self.pe_array = []
         self.T = []

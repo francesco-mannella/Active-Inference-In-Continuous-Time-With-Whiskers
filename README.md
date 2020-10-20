@@ -16,6 +16,8 @@
 ## Demonstation of model behaviour
 <table>
   <tr>
+<td><img src="pics/still.gif" width="100%"/>
+    </td>
     <td><img src="pics/normal.gif" width="100%"/>
     </td>
     <td><img src="pics/large.gif" width="100%"/>
