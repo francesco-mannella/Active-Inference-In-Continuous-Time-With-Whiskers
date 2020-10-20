@@ -16,9 +16,9 @@
 ## Demonstation of model behaviour
 <table>
   <tr style="height:20em">
-    <td>Adding a <b>fixed</b> object</td>
-    <td><b>Moving</b> to a <b>normal sized</b> object</td>
-    <td><b>Moving</b> to a <b>large sized</b> object</td>
+    <td>Adding a <a href="pics/still.png"><b>fixed</b> object</a></td>
+    <td><b>Moving</b> to a <a href="pics/normal.png"><b>normal sized</b> object</a</td>
+    <td><b>Moving</b> to a <a href="pics/large.png"><b>large sized</b> object</a></td>
   </tr>
   <tr>
 <td>
