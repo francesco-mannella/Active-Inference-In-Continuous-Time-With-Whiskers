@@ -21,11 +21,17 @@
     <td><b>Moving</b> to a <b>large sized</b> object</td>
   </tr>
   <tr>
-<td><img src="pics/still.gif" width="100%"/>
-    </td>
-    <td><img src="pics/normal.gif" width="100%"/>
-    </td>
-    <td><img src="pics/large.gif" width="100%"/>
-    </td>
-  </tr>
+<td>
+  <a href="pics/still.gif"><img src="pics/still.gif" width="100%"/>
+    </a>
+</td>
+<td>
+  <a href="pics/normal.gif"><img src="pics/normal.gif" width="100%"/>
+  </a>
+</td>
+<td>
+  <a href="pics/large.gif"><img src="pics/large.gif" width="100%"/
+  </a>
+</td>
+</tr>
 </table>
