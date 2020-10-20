@@ -13,6 +13,12 @@ def ik_angle(origin, point):
         aa = dy/dx
         angle = np.arctan(aa)
 
+        # if dx < 0 and dy > 0:
+        #     angle = 0.5*np.pi - angle
+        # if dx < 0 and dy < 0:
+        #     angle = np.pi + angle
+        # if dx > 0 and dy < 0:
+        #     angle = 1.5*np.pi - angle
     return angle
 
 
@@ -23,11 +29,7 @@ large_box = [
     (-1.3, -.5), (1.3, -.5),
     (1.3, 2.5), (-1.3, 2.5)]
 for type in ["normal", "large", "still"]:
-<<<<<<< HEAD
-    stime = 190000
-=======
     stime = 180000
->>>>>>> bed5a67d02666bcba42107d2355b9a35713a0d81
 
     gp = GP(eta=0.0005, freq=0.5, amp=1.2)
     gm = GM(eta=0.0005, freq=0.5, amp=1.2)
@@ -56,13 +58,8 @@ for type in ["normal", "large", "still"]:
 
     for t in range(stime):
 
-<<<<<<< HEAD
-        if type=="normal" or type=="large":
-            box_pos = np.array([0, np.maximum(1.3, 2.5*np.exp(-3*t/stime)+0.7)])
-=======
         if type == "normal" or type == "large":
             box_pos = np.array([0, np.maximum(1.3, 3*np.exp(-2*t/stime)+0.7)])
->>>>>>> bed5a67d02666bcba42107d2355b9a35713a0d81
         else:
             box_pos = np.array([0, 5]) if t < stime/3 else np.array([0, 1.48])
 
