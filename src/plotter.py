@@ -91,6 +91,7 @@ class PredErrPlotter:
         self.ax.set_xlim([-0.1*stime, stime*1.1])
         self.ax.set_ylim([-0.2, 0.5])
         self.ax.set_yticks([-0.1, 0, 0.5])
+        self.ax.set_yticklabels(["-.1", "0", ".5"])
         self.ax.set_xticks([])
         self.pe_array = []
         self.T = []
