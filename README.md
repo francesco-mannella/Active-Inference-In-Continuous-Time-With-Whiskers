@@ -17,8 +17,8 @@
 <table>
   <tr style="height:20em">
     <td>Adding a <b>fixed</b> object</td>
-    <td>Moving to a <b>normal sized</b> object</td>
-    <td>Moving to a <b>large sized</b> object</td>
+    <td><b>Moving</b> to a <b>normal sized</b> object</td>
+    <td><b>Moving</b> to a <b>large sized</b> object</td>
   </tr>
   <tr>
 <td><img src="pics/still.gif" width="100%"/>
