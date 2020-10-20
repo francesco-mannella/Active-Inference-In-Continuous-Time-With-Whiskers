@@ -40,13 +40,13 @@ for type in ["normal", "large", "still"]:
     genProcPlot = Plotter("gen_proc_"+type, type="process",
                           wallcolor=[0.2, 0.2, 0, 0.2],
                           labels={"x": "proprioception",
-                                  "nu": "action"},
+                                  "nu": "action (oscil. ampl.)"},
                           color=[.5, .2, 0], stime=stime)
 
     genModPlot = Plotter("gen_mod_"+type, type="model",
                          wallcolor=[0, 0, 0, 0],
                          labels={"x": "proprioception",
-                                 "nu": "internal cause"},
+                                 "nu": "internal cause (repr. oscill. ampl.)"},
                          color=[.2, .5, 0], stime=stime)
 
     delta_action = 0
@@ -62,7 +62,7 @@ for type in ["normal", "large", "still"]:
             box_pos = np.array([0,
                                 np.maximum(1.3, 2.2*np.exp(-3*t/stime)+0.7)])
         else:
-            box_pos = np.array([0, 5]) if t < stime*(40/100) \
+            box_pos = np.array([0, 5]) if t < stime*(36/100) \
                 else np.array([0, 1.48])
 
         sim.move_box(box_pos)
