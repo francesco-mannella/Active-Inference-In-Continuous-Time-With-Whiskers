@@ -135,7 +135,7 @@ class GM:
             -(1/omx)*(dmx[2] - (n*mx[0] - mx[2]))])
 
         self.gd_mu_nu = -(1/omx)*mx[0]*(n*mx[0] - mx[2] - dmx[2])
-        self.gd_a = -(1/oms**2)*da*(s - mx[2])
+        self.gd_a = (1/oms**2)*da*(s - mx[2])
 
         # dynamics of internal variables
         self.dmu_x[0] = self.freq*self.mu_x[1]
@@ -145,8 +145,8 @@ class GM:
         # update with gradients
         self.dmu_x += self.eta*self.gd_dmu_x
         self.mu_x += self.eta*self.dmu_x + self.h*self.gd_mu_x
-        self.mu_nu -= self.eta*self.gd_a
-        return -self.gd_a
+        self.mu_nu += self.eta*self.gd_a
+        return self.gd_a
 
 
 if __name__ == "__main__":
