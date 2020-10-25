@@ -27,8 +27,8 @@ for type in ["normal", "large", "still"]:
 
     stime = 180000
 
-    gp = GP(eta=0.0005, freq=0.5, amp=1.2)
-    gm = GM(eta=0.0005, freq=0.5, amp=1.2)
+    gp = GP(dt=0.0005, freq=0.5, amp=1.2)
+    gm = GM(dt=0.0005, freq=0.5, amp=1.2)
 
     sim = Sim("demo_"+type, points=normal_box
               if type == "normal" or type == "still" else large_box)

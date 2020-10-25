@@ -27,13 +27,13 @@ class GP:
         mu_x: (float) hidden state (central value).
         dmu_x: (float) Change of  hidden state (central value).
         da: (float) Increment of action
-        eta: (float) Integration step
+        dt: (float) Integration step
         omega_s: (float) Standard deviation of sensory states
         omega_x: (float)  Standard deviation of inner states
         a: (float) action
     """
 
-    def __init__(self, eta=0.0005, freq=0.01, amp=0.1):
+    def __init__(self, dt=0.0005, freq=0.01, amp=0.1):
 
         self.pi_s = 9
         self.pi_x = 9
@@ -41,7 +41,7 @@ class GP:
         self.mu_s = 1
         self.omega_s = p2std(self.pi_s)
         self.omega_x = p2std(self.pi_x)
-        self.eta = eta
+        self.dt = dt
         self.freq = freq
         self.a = amp
         self.t = 0
@@ -54,10 +54,10 @@ class GP:
 
         """
 
-        self.a += self.eta*action
-        self.mu_x[0] += self.eta*(self.freq*self.mu_x[1])
-        self.mu_x[1] += self.eta*(-self.mu_x[0])
-        self.mu_x[2] += self.eta*(self.a*self.mu_x[0] - self.mu_x[2])
+        self.a += self.dt*action
+        self.mu_x[0] += self.dt*(self.freq*self.mu_x[1])
+        self.mu_x[1] += self.dt*(-self.mu_x[0])
+        self.mu_x[2] += self.dt*(self.a*self.mu_x[0] - self.mu_x[2])
         self.s = self.mu_x[2] + self.omega_s*rng.randn()
 
         return self.s
@@ -77,14 +77,14 @@ class GM:
         dmu_x: (float) Change of  hidden state (central value).
         mu_nu: (float) Internal cause (central value).
         da: (float) Increment of action
-        eta: (float) Integration step
+        dt: (float) Integration step
         omega_s: (float) Standard deviation of sensory states
         omega_x: (float)  Standard deviation of inner states
         omega_nu : (float) Standard deviation of inner causes
 
     """
 
-    def __init__(self, eta=0.0005, freq=0.001, amp=np.pi/2):
+    def __init__(self, dt=0.0005, freq=0.001, amp=np.pi/2):
 
         self.pi_s = 9
         self.pi_x = 9
@@ -95,8 +95,7 @@ class GM:
         self.mu_nu = amp
 
         self.da = 1
-        self.eta = eta
-        self.h = eta
+        self.dt = dt
         self.freq = freq
 
     def update(self, sensory_states):
@@ -123,7 +122,6 @@ class GM:
         n = self.mu_nu
         da, fr = self.da, self.freq
 
-
         # TODO: gradient descent optimizations
         self.gd_mu_x = np.array([
             -(1/omx)*(n*(n*mx[0] - mx[2] - dmx[2]) + (mx[0] + dmx[1])),
@@ -143,27 +141,26 @@ class GM:
         self.dmu_x[1] = -self.mu_x[0]
         self.dmu_x[2] = self.mu_nu*self.mu_x[0] - self.mu_x[2]
 
-        self.mu_x_moment += self.eta*self.gd_dmu_x
-
+        self.mu_x_moment += self.dt*self.gd_dmu_x
 
         # update with gradients
-        self.dmu_x += self.eta*self.mu_x_moment
-        self.mu_x += self.eta*self.dmu_x + self.h*self.gd_mu_x
-        self.mu_nu += self.eta*self.gd_a
+        self.dmu_x += self.dt*self.mu_x_moment + self.dt*self.gd_mu_x
+        self.mu_x += self.dt*self.dmu_x
+        self.mu_nu += self.dt*self.gd_a
         return self.gd_a
 
 
 if __name__ == "__main__":
 
-    gp = GP(eta=0.0005, freq=0.5, amp=1)
-    gm = GM(eta=0.0005, freq=0.5, amp=1)
+    gp = GP(dt=0.0005, freq=0.5, amp=1)
+    gm = GM(dt=0.0005, freq=0.5, amp=1)
 
     # %%
     data = []
     a = 0.0
-    stime = 100000
+    stime = 200000
     for t in range(stime):
-        if t ==   30000:
+        if t == 30000:
             gp.mu_x[2] = np.maximum(0.5, gp.mu_x[2])
         gp.update(a)
         s, gpm, gmm, gpa, gmn = gp.s, gp.mu_x[2], gm.mu_x[2], gp.a, gm.mu_nu
