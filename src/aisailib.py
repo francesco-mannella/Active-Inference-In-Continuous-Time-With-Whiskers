@@ -91,6 +91,7 @@ class GM:
 
         self.mu_x = np.ones(3)
         self.dmu_x = np.ones(3)
+        self.mu_x_moment = np.zeros(3)
         self.mu_nu = amp
 
         self.da = 1
@@ -142,8 +143,11 @@ class GM:
         self.dmu_x[1] = -self.mu_x[0]
         self.dmu_x[2] = self.mu_nu*self.mu_x[0] - self.mu_x[2]
 
+        self.mu_x_moment += self.eta*self.gd_dmu_x
+
+
         # update with gradients
-        self.dmu_x += self.eta*self.gd_dmu_x
+        self.dmu_x += self.eta*self.mu_x_moment
         self.mu_x += self.eta*self.dmu_x + self.h*self.gd_mu_x
         self.mu_nu += self.eta*self.gd_a
         return self.gd_a
