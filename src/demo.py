@@ -15,8 +15,8 @@ def attenuation(stime):
 for type in ["normal", "attenuation"]:
     stime = 145000
 
-    gp = GP(eta=0.0005, freq=0.5, amp=0.8)
-    gm = GM(eta=0.0005, freq=0.5, amp=0.8)
+    gp = GP(dt=0.0005, freq=0.5, amp=0.8)
+    gm = GM(dt=0.0005, freq=0.5, amp=0.8)
 
     sim = Sim("demo_"+type)
     prederr = PredErrPlotter("prederr", type, stime)

@@ -27,21 +27,21 @@ class GP:
         mu_x: (float) hidden state (central value).
         dmu_x: (float) Change of  hidden state (central value).
         da: (float) Increment of action
-        eta: (float) Integration step
+        dt: (float) Integration step
         omega_s: (float) Standard deviation of sensory states
         omega_x: (float)  Standard deviation of inner states
         a: (float) action
     """
 
-    def __init__(self, eta=0.0005, freq=0.01, amp=0.1):
+    def __init__(self, dt=0.0005, freq=0.01, amp=0.1):
 
-        self.pi_s = 4.5
-        self.pi_x = 4.5
+        self.pi_s = 9
+        self.pi_x = 9
         self.mu_x = np.ones(3)
         self.mu_s = 1
         self.omega_s = p2std(self.pi_s)
         self.omega_x = p2std(self.pi_x)
-        self.eta = eta
+        self.dt = dt
         self.freq = freq
         self.a = amp
         self.t = 0
@@ -54,10 +54,10 @@ class GP:
 
         """
 
-        self.a += self.eta*action
-        self.mu_x[0] += self.eta*(self.freq*self.mu_x[1])
-        self.mu_x[1] += self.eta*(-self.mu_x[0])
-        self.mu_x[2] += self.eta*(self.a*self.mu_x[0] - self.mu_x[2])
+        self.a += self.dt*action
+        self.mu_x[0] += self.dt*(self.freq*self.mu_x[1])
+        self.mu_x[1] += self.dt*(-self.mu_x[0])
+        self.mu_x[2] += self.dt*(self.a*self.mu_x[0] - self.mu_x[2])
         self.s = self.mu_x[2] + self.omega_s*rng.randn()
 
         return self.s
@@ -77,25 +77,25 @@ class GM:
         dmu_x: (float) Change of  hidden state (central value).
         mu_nu: (float) Internal cause (central value).
         da: (float) Increment of action
-        eta: (float) Integration step
+        dt: (float) Integration step
         omega_s: (float) Standard deviation of sensory states
         omega_x: (float)  Standard deviation of inner states
         omega_nu : (float) Standard deviation of inner causes
 
     """
 
-    def __init__(self, eta=0.0005, freq=0.001, amp=np.pi/2):
+    def __init__(self, dt=0.0005, freq=0.001, amp=np.pi/2):
 
         self.pi_s = 9
         self.pi_x = 9
 
         self.mu_x = np.ones(3)
         self.dmu_x = np.ones(3)
+        self.mu_x_moment = np.zeros(3)
         self.mu_nu = amp
 
         self.da = 1
-        self.eta = eta
-        self.h = eta
+        self.dt = dt
         self.freq = freq
 
     def update(self, sensory_states):
@@ -122,7 +122,6 @@ class GM:
         n = self.mu_nu
         da, fr = self.da, self.freq
 
-
         # TODO: gradient descent optimizations
         self.gd_mu_x = np.array([
             -(1/omx)*(n*(n*mx[0] - mx[2] - dmx[2]) + (mx[0] + dmx[1])),
@@ -135,49 +134,38 @@ class GM:
             -(1/omx)*(dmx[2] - (n*mx[0] - mx[2]))])
 
         self.gd_mu_nu = -(1/omx)*mx[0]*(n*mx[0] - mx[2] - dmx[2])
-        self.gd_a = -(1/oms**2)*da*(s - mx[2])
+        self.gd_a = (1/oms**2)*da*(s - mx[2])
 
         # dynamics of internal variables
         self.dmu_x[0] = self.freq*self.mu_x[1]
         self.dmu_x[1] = -self.mu_x[0]
         self.dmu_x[2] = self.mu_nu*self.mu_x[0] - self.mu_x[2]
 
+        self.mu_x_moment += self.dt*self.gd_dmu_x
+
         # update with gradients
-        self.dmu_x += self.eta*self.gd_dmu_x
-        self.mu_x += self.eta*self.dmu_x + self.h*self.gd_mu_x
-        self.mu_nu -= self.eta*self.gd_a
-        return -self.gd_a
+        self.dmu_x += self.dt*self.mu_x_moment + self.dt*self.gd_mu_x
+        self.mu_x += self.dt*self.dmu_x
+        self.mu_nu += self.dt*self.gd_a
+        return self.gd_a
 
 
 if __name__ == "__main__":
 
-    gp = GP(eta=0.002, freq=0.5, amp=1)
-    gm = GM(eta=0.002, freq=0.5, amp=1)
+    gp = GP(dt=0.0005, freq=0.5, amp=1)
+    gm = GM(dt=0.0005, freq=0.5, amp=1)
 
     # %%
     data = []
-    sens = []
-    a = 0
-    stime = 100000
-    peaks = 0
+    a = 0.0
+    stime = 200000
     for t in range(stime):
-        gm.mu_nu += 0.1*(t == (stime//8))
-        gp.a = np.minimum(1, gp.a)
+        if t == 30000:
+            gp.mu_x[2] = np.maximum(0.5, gp.mu_x[2])
         gp.update(a)
-        s, yg, ym, aa, n = gp.s, gp.mu_x[2], gm.mu_x[2], gp.a, gm.mu_nu
-
-        if len(sens) > 2:
-            dd = np.diff(sens[-2:])[-1]
-            if np.abs(dd) < 0.0008 and dd > 0:
-                peaks += 1
-                if peaks > 6:
-                    gp.a = np.minimum(0.5, gp.a)
-                    print(t)
-
+        s, gpm, gmm, gpa, gmn = gp.s, gp.mu_x[2], gm.mu_x[2], gp.a, gm.mu_nu
         a = gm.update(s)
-
-        data.append([s, yg, ym, aa, n])
-        sens.append(s)
+        data.append([s, gpm, gmm, gpa, gmn])
     data = np.vstack(data)
 
     # %%
@@ -186,13 +174,7 @@ if __name__ == "__main__":
     plt.subplot(211)
     plt.plot(data[:, 1], c="red", lw=1, ls="dashed")
     plt.plot(data[:, 3], c="#aa6666", lw=3)
-    plt.plot([0, stime], [1.5, 1.5], c="red", lw=0.5)
-    plt.plot([0, stime], [1, 1], c="red", lw=0.5)
-    plt.plot([0, stime], [0.5, 0.5], c="red", lw=0.5)
     plt.subplot(212)
     plt.plot(data[:, 2], c="green", lw=1, ls="dashed")
     plt.plot(data[:, 4], c="#66aa66", lw=3)
-    plt.plot([0, stime], [1.5, 1.5], c="green", lw=0.5)
-    plt.plot([0, stime], [1, 1], c="green", lw=0.5)
-    plt.plot([0, stime], [0.5, 0.5], c="green", lw=0.5)
     plt.show()
