@@ -78,24 +78,26 @@ class GM:
         mu_nu: (float) Internal cause (central value).
         da: (float) Increment of action
         dt: (float) Integration step
+        eta: (float) Free energy gradient step
         omega_s: (float) Standard deviation of sensory states
         omega_x: (float)  Standard deviation of inner states
         omega_nu : (float) Standard deviation of inner causes
 
     """
 
-    def __init__(self, dt=0.0005, freq=0.001, amp=np.pi/2):
+    def __init__(self, dt=0.0005, eta=0.0005,
+                 freq=0.001, amp=np.pi/2):
 
         self.pi_s = 9
         self.pi_x = 9
 
         self.mu_x = np.ones(3)
         self.dmu_x = np.ones(3)
-        self.mu_x_moment = np.zeros(3)
         self.mu_nu = amp
 
         self.da = 1
         self.dt = dt
+        self.eta = eta
         self.freq = freq
 
     def update(self, sensory_states):
@@ -141,11 +143,13 @@ class GM:
         self.dmu_x[1] = -self.mu_x[0]
         self.dmu_x[2] = self.mu_nu*self.mu_x[0] - self.mu_x[2]
 
-        self.mu_x_moment += self.dt*self.gd_dmu_x
-
         # update with gradients
-        self.dmu_x += self.dt*self.mu_x_moment + self.dt*self.gd_mu_x
-        self.mu_x += self.dt*self.dmu_x
+        dmu_noise = self.omega_x*rng.randn(*self.mu_x.shape)
+        ddmu_noise = self.omega_x*rng.randn(*self.mu_x.shape)
+        self.mu_x += self.dt*(self.dmu_x
+            - self.eta * (self.gd_mu_x + dmu_noise
+                          + self.eta*(self.gd_dmu_x + ddmu_noise)))
+
         self.mu_nu += self.dt*self.gd_a
         return self.gd_a
 
@@ -153,15 +157,15 @@ class GM:
 if __name__ == "__main__":
 
     gp = GP(dt=0.0005, freq=0.5, amp=1)
-    gm = GM(dt=0.0005, freq=0.5, amp=1)
+    gm = GM(dt=0.0005, eta=0.1, freq=0.5, amp=1)
 
     # %%
     data = []
     a = 0.0
     stime = 200000
     for t in range(stime):
-        if t == 30000:
-            gp.mu_x[2] = np.maximum(0.5, gp.mu_x[2])
+        if t > 30000:
+            gp.mu_x[2] = np.minimum(0.5, gp.mu_x[2])
         gp.update(a)
         s, gpm, gmm, gpa, gmn = gp.s, gp.mu_x[2], gm.mu_x[2], gp.a, gm.mu_nu
         a = gm.update(s)
