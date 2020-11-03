@@ -20,6 +20,7 @@ for i in $(seq 0 $N); do
   echo "convert frame $i"
   n=$(echo $i |xargs printf "%08d")
   for type in $TYPE{1,2,3}; do
+    mogrify -rotate 180 demo_${type}/demo_${type}${n}.png 
     convert -scale 400 -antialias  \
     demo_${type}/demo_${type}${n}.png \
     gen_proc_${type}/gen_proc_${type}${n}.png \
@@ -36,7 +37,7 @@ done
 
 echo "videos"
 for type in $TYPE{1,2,3}; do
-  convert -loop 0 -delay 20 ${type}/${type}* ${MAIN_DIR}/pics/${type}.gif
+  convert -loop 0 -delay 10 ${type}/${type}* ${MAIN_DIR}/pics/${type}.gif
 done
 
 echo "clear"

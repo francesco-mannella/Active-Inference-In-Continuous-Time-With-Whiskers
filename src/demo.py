@@ -1,5 +1,5 @@
 from plotter import Plotter, PredErrPlotter
-from sim import Sim
+from sim import Sim, a2xy
 from aisailib import GP, GM
 import numpy as np
 
@@ -13,7 +13,7 @@ normal_box = np.array([
     (sidewidth, sideheight),
     (-sidewidth, sideheight)]) + center
 
-sidewidth = 1.3
+sidewidth = 5
 sideheight = 1.5
 center = [0, 1]
 large_box = np.array([
@@ -26,10 +26,10 @@ for type in ["normal", "large", "still"]:
 
     print("simulating", type, "...")
 
-    stime = 180000
+    stime = 240000
 
-    gp = GP(dt=0.0005, freq=0.5, amp=1.2)
-    gm = GM(dt=0.0005, freq=0.5, amp=1.2)
+    gp = GP(dt=0.0003, freq=0.5, amp=1.2)
+    gm = GM(dt=0.0003, freq=0.5, amp=1.2)
 
     sim = Sim("demo_"+type, points=normal_box
               if type == "normal" or type == "still" else large_box)
@@ -89,8 +89,12 @@ for type in ["normal", "large", "still"]:
 
             sim.set_box()
             sim.update(sens[t], sens_model[t])
+
+
             prederr.update([sens[t], sens_model[t]], t)
             genProcPlot.update([sens[t], ampl[t],
-                                curr_angle_limit if collision is True else None, 0], t)
+                                curr_angle_limit if collision
+                                is True else None, 0], t)
             genModPlot.update([sens_model[t], ampl_model[t],
-                               curr_angle_limit if collision is True else None, 0], t)
+                               curr_angle_limit if collision
+                               is True else None, 0], t)

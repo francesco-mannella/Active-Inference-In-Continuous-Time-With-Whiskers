@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
+import sys
 Path = mpath.Path
 
 # %%
@@ -10,6 +11,7 @@ Path = mpath.Path
 
 def a2xy(angle, radius=1):
     return np.cos(angle)*radius, np.sin(angle)*radius
+
 
 def ik_angle(origin, point):
     x, y = np.vstack([origin, point])
@@ -20,6 +22,7 @@ def ik_angle(origin, point):
         aa = dy/dx
         angle = np.arctan(aa)
     return angle
+
 
 class Sim:
 
@@ -38,7 +41,9 @@ class Sim:
 
         self.whisker, = self.ax.plot(0, 0, c="k", lw=5)
         self.whisker_base = np.array([-0.25, 0])
-        self.whisker_len = 2
+        self.whisker_angle_ampl_scale = 0.35
+        self.whisker_base_angle = np.pi*0.05
+        self.whisker_len = 1.3
         self.whisker_init_angle = np.pi/4
         self.set_whisker(self.whisker_init_angle)
         self.ax.set_xlim([-2, 2])
@@ -46,7 +51,7 @@ class Sim:
 
         self.whisker_model, = self.ax.plot(0, 0, c="g", lw=5, alpha=0.5)
         self.whisker_model_base = np.array([-0.25, 0])
-        self.whisker_model_len = 2
+        self.whisker_model_len = 1.3
         self.whisker_model_init_angle = np.pi/4
         self.set_whisker_model(self.whisker_model_init_angle)
         self.ax.set_xlim([-2, 2])
@@ -90,25 +95,41 @@ class Sim:
         self.whisker_model.set_data(*self.whisker_model_vertices.T)
 
     def update(self, angle, angle_model):
-        angle = (0.3*angle + 0.2)*np.pi
-        angle_model = (0.3*angle_model+0.2)*np.pi
+        angle = self.whisker_angle_ampl_scale*angle * np.pi + \
+            self.whisker_base_angle
+        angle_model = self.whisker_angle_ampl_scale * angle_model*np.pi + \
+            self.whisker_base_angle
         self.set_whisker(angle)
         self.set_whisker_model(angle_model)
         self.fig.canvas.draw()
         self.vm.save_frame()
 
     def detect_collision(self):
-        angle_to_box_vertex = ik_angle(self.whisker_base, self.box_points[0])
-        angle_to_box_vertex = np.abs(angle_to_box_vertex+0.2*np.pi)
 
-        in_collision = self.box_points[0][1] < \
-            self.whisker_base[1] + self.whisker_len
+        box_height = self.box_points[0][1]
+        whisker_head = self.whisker_base + self.whisker_len
+
+        in_collision_with_vertex = box_height < whisker_head[1]
 
         collision = False
-        curr_angle_limit = 10
-        if in_collision:
-            curr_angle_limit = angle_to_box_vertex
+        curr_angle_limit = np.pi
+        if in_collision_with_vertex:
+
+            if self.box_points[0][0] > self.whisker_vertices[1][0]:
+                angle_to_box_vertex = ik_angle(self.whisker_base,
+                                               self.box_points[0])
+                angle_to_box_vertex = np.abs(angle_to_box_vertex +
+                                             self.whisker_base_angle)
+                curr_angle_limit = angle_to_box_vertex
+            else:
+                box_height_whisk_angle = -np.arcsin(
+                    (box_height - self.whisker_base[1]) / self.whisker_len)
+                box_height_whisk_angle = np.abs(
+                    box_height_whisk_angle + self.whisker_base_angle)
+                curr_angle_limit = box_height_whisk_angle
+
             collision = True
+
         return collision, curr_angle_limit
 
     def close(self):
