@@ -70,14 +70,15 @@ class Sim:
         self.box.set_facecolor([0.9, 0.9, 0.9])
 
     def set_whisker(self, angle):
-        vertices = self.whisker_base + \
-            np.vstack([(0, 0), a2xy(np.pi - angle, self.whisker_len)])
-        self.whisker.set_data(*vertices.T)
+        self.angle = angle
+        self.whisker_vertices = self.whisker_base + \
+            np.vstack([(0, 0), a2xy(np.pi - self.angle, self.whisker_len)])
+        self.whisker.set_data(*self.whisker_vertices.T)
 
     def set_whisker_model(self, angle):
-        vertices = self.whisker_model_base + \
+        self.whisker_model_vertices = self.whisker_model_base + \
             np.vstack([(0, 0), a2xy(np.pi - angle, self.whisker_model_len)])
-        self.whisker_model.set_data(*vertices.T)
+        self.whisker_model.set_data(*self.whisker_model_vertices.T)
 
     def update(self, angle, angle_model):
         angle = (0.3*angle + 0.2)*np.pi

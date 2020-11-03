@@ -21,9 +21,10 @@ normal_box = [
 large_box = [
     (-1.3, -.5), (1.3, -.5),
     (1.3, 2.5), (-1.3, 2.5)]
+
 for type in ["normal", "large", "still"]:
 
-    print("simulating",type,"...")
+    print("simulating", type, "...")
 
     stime = 180000
 
@@ -55,7 +56,7 @@ for type in ["normal", "large", "still"]:
     frame = 0
     for t in range(stime):
 
-        # compute box position and collision
+        # compute box position
         if type == "normal" or type == "large":
             box_pos = np.array([0,
                                 np.maximum(1.3, 2.2*np.exp(-3*t/stime)+0.7)])
@@ -63,15 +64,25 @@ for type in ["normal", "large", "still"]:
             box_pos = np.array([0, 5]) if t < stime*(36/100) \
                 else np.array([0, 1.48])
         sim.move_box(box_pos)
-        angle = ik_angle(sim.whisker_base, sim.box_points[0])
-        angle = np.abs(angle+0.2*np.pi)
-        min_pos = + sim.whisker_base[1] + sim.whisker_len - \
+
+        # compute collision
+        angle_to_box_vertex = ik_angle(sim.whisker_base, sim.box_points[0])
+        angle_to_box_vertex = np.abs(angle_to_box_vertex+0.2*np.pi)
+        min_box_pos = sim.whisker_base[1] + sim.whisker_len - \
             sim.box_points_init[0][1]
-        angle_pos = angle if box_pos[1] < min_pos else 10
+        collision = False
+        if box_pos[1] < min_box_pos:
+            curr_angle_limit = angle_to_box_vertex
+            collision = True
+        elif box_pos[1] < sim.whisker_vertices[1][1]:
+            curr_angle_limit = sim.angle
+            collision = True
+        else:
+            curr_angle_limit = 10
 
         # update process
         gp.update(delta_action)
-        gp.mu_x[2] = np.minimum(angle_pos, gp.mu_x[2])
+        gp.mu_x[2] = np.minimum(curr_angle_limit, gp.mu_x[2])
 
         # get state
         sens[t] = gp.mu_x[2]
@@ -86,12 +97,12 @@ for type in ["normal", "large", "still"]:
         if t % 1200 == 0 or t == stime - 1:
 
             print(frame)
-            frame +=1
+            frame += 1
 
             sim.set_box()
             sim.update(sens[t], sens_model[t])
             prederr.update([sens[t], sens_model[t]], t)
             genProcPlot.update([sens[t], ampl[t],
-                                angle if box_pos[1] < min_pos else None, 0], t)
+                                curr_angle_limit if collision is True else None, 0], t)
             genModPlot.update([sens_model[t], ampl_model[t],
-                               angle if box_pos[1] < min_pos else None, 0], t)
+                               curr_angle_limit if collision is True else None, 0], t)
