@@ -4,17 +4,6 @@ from aisailib import GP, GM
 import numpy as np
 
 
-def ik_angle(origin, point):
-    x, y = np.vstack([origin, point])
-    angle = 0
-    dx = (y[0] - x[0])
-    dy = (y[1] - x[1])
-    if np.abs(dx) > 1e-30:
-        aa = dy/dx
-        angle = np.arctan(aa)
-    return angle
-
-
 sidewidth = 0.8
 sideheight = 1.5
 center = [0, 1]
@@ -77,19 +66,7 @@ for type in ["normal", "large", "still"]:
         sim.move_box(box_pos)
 
         # compute collision
-        angle_to_box_vertex = ik_angle(sim.whisker_base, sim.box_points[0])
-        angle_to_box_vertex = np.abs(angle_to_box_vertex+0.2*np.pi)
-        min_box_pos = sim.whisker_base[1] + sim.whisker_len - \
-            sim.box_points_init[0][1]
-        collision = False
-        if box_pos[1] < min_box_pos:
-            curr_angle_limit = angle_to_box_vertex
-            collision = True
-        elif box_pos[1] < sim.whisker_vertices[1][1]:
-            curr_angle_limit = sim.angle
-            collision = True
-        else:
-            curr_angle_limit = 10
+        collision, curr_angle_limit = sim.detect_collision()
 
         # update process
         gp.update(delta_action)

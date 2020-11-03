@@ -11,6 +11,15 @@ Path = mpath.Path
 def a2xy(angle, radius=1):
     return np.cos(angle)*radius, np.sin(angle)*radius
 
+def ik_angle(origin, point):
+    x, y = np.vstack([origin, point])
+    angle = 0
+    dx = (y[0] - x[0])
+    dy = (y[1] - x[1])
+    if np.abs(dx) > 1e-30:
+        aa = dy/dx
+        angle = np.arctan(aa)
+    return angle
 
 class Sim:
 
@@ -87,6 +96,20 @@ class Sim:
         self.set_whisker_model(angle_model)
         self.fig.canvas.draw()
         self.vm.save_frame()
+
+    def detect_collision(self):
+        angle_to_box_vertex = ik_angle(self.whisker_base, self.box_points[0])
+        angle_to_box_vertex = np.abs(angle_to_box_vertex+0.2*np.pi)
+
+        in_collision = self.box_points[0][1] < \
+            self.whisker_base[1] + self.whisker_len
+
+        collision = False
+        curr_angle_limit = 10
+        if in_collision:
+            curr_angle_limit = angle_to_box_vertex
+            collision = True
+        return collision, curr_angle_limit
 
     def close(self):
         self.vm.mk_video()
