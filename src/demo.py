@@ -15,12 +15,23 @@ def ik_angle(origin, point):
     return angle
 
 
-normal_box = [
-    (-0.8, -.5), (0.8, -.5),
-    (0.8, 2.5), (-0.8, 2.5)]
-large_box = [
-    (-1.3, -.5), (1.3, -.5),
-    (1.3, 2.5), (-1.3, 2.5)]
+sidewidth = 0.8
+sideheight = 1.5
+center = [0, 1]
+normal_box = np.array([
+    (-sidewidth, -sideheight),
+    (sidewidth, -sideheight),
+    (sidewidth, sideheight),
+    (-sidewidth, sideheight)]) + center
+
+sidewidth = 1.3
+sideheight = 1.5
+center = [0, 1]
+large_box = np.array([
+    (-sidewidth, -sideheight),
+    (sidewidth, -sideheight),
+    (sidewidth, sideheight),
+    (-sidewidth, sideheight)]) + center
 
 for type in ["normal", "large", "still"]:
 
