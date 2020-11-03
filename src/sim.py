@@ -11,6 +11,15 @@ Path = mpath.Path
 def a2xy(angle, radius=1):
     return np.cos(angle)*radius, np.sin(angle)*radius
 
+def ik_angle(origin, point):
+    x, y = np.vstack([origin, point])
+    angle = 0
+    dx = (y[0] - x[0])
+    dy = (y[1] - x[1])
+    if np.abs(dx) > 1e-30:
+        aa = dy/dx
+        angle = np.arctan(aa)
+    return angle
 
 class Sim:
 
@@ -70,14 +79,15 @@ class Sim:
         self.box.set_facecolor([0.9, 0.9, 0.9])
 
     def set_whisker(self, angle):
-        vertices = self.whisker_base + \
-            np.vstack([(0, 0), a2xy(np.pi - angle, self.whisker_len)])
-        self.whisker.set_data(*vertices.T)
+        self.angle = angle
+        self.whisker_vertices = self.whisker_base + \
+            np.vstack([(0, 0), a2xy(np.pi - self.angle, self.whisker_len)])
+        self.whisker.set_data(*self.whisker_vertices.T)
 
     def set_whisker_model(self, angle):
-        vertices = self.whisker_model_base + \
+        self.whisker_model_vertices = self.whisker_model_base + \
             np.vstack([(0, 0), a2xy(np.pi - angle, self.whisker_model_len)])
-        self.whisker_model.set_data(*vertices.T)
+        self.whisker_model.set_data(*self.whisker_model_vertices.T)
 
     def update(self, angle, angle_model):
         angle = (0.3*angle + 0.2)*np.pi
@@ -86,6 +96,20 @@ class Sim:
         self.set_whisker_model(angle_model)
         self.fig.canvas.draw()
         self.vm.save_frame()
+
+    def detect_collision(self):
+        angle_to_box_vertex = ik_angle(self.whisker_base, self.box_points[0])
+        angle_to_box_vertex = np.abs(angle_to_box_vertex+0.2*np.pi)
+
+        in_collision = self.box_points[0][1] < \
+            self.whisker_base[1] + self.whisker_len
+
+        collision = False
+        curr_angle_limit = 10
+        if in_collision:
+            curr_angle_limit = angle_to_box_vertex
+            collision = True
+        return collision, curr_angle_limit
 
     def close(self):
         self.vm.mk_video()
