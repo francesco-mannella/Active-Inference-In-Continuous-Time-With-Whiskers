@@ -8,7 +8,7 @@ def f(x, a, h):
 
 
 def p2std(p):
-    return 10000*np.exp(-p)
+    return np.exp(-p)
 
 # %%
 
@@ -35,8 +35,8 @@ class GP:
 
     def __init__(self, dt=0.0005, freq=0.01, amp=0.1):
 
-        self.pi_s = 9
-        self.pi_x = 9
+        self.pi_s = -.3
+        self.pi_x = -.3
         self.mu_x = np.ones(3)
         self.mu_s = 1
         self.omega_s = p2std(self.pi_s)
@@ -88,8 +88,8 @@ class GM:
     def __init__(self, dt=0.0005, eta=0.0005,
                  freq=0.001, amp=np.pi/2):
 
-        self.pi_s = 9
-        self.pi_x = 9
+        self.pi_s = -.3
+        self.pi_x = -.3
 
         self.mu_x = np.ones(3)
         self.dmu_x = np.ones(3)
@@ -144,11 +144,9 @@ class GM:
         self.dmu_x[2] = self.mu_nu*self.mu_x[0] - self.mu_x[2]
 
         # update with gradients
-        dmu_noise = self.omega_x*rng.randn(*self.mu_x.shape)
-        ddmu_noise = self.omega_x*rng.randn(*self.mu_x.shape)
         self.mu_x += self.dt*(self.dmu_x
-            - self.eta * (self.gd_mu_x + dmu_noise
-                          + self.eta*(self.gd_dmu_x + ddmu_noise)))
+            - self.eta * (self.gd_mu_x
+                          + self.eta*(self.gd_dmu_x)))
 
         self.mu_nu += self.dt*self.gd_a
         return self.gd_a
@@ -156,8 +154,8 @@ class GM:
 
 if __name__ == "__main__":
 
-    gp = GP(dt=0.0005, freq=0.5, amp=1)
-    gm = GM(dt=0.0005, eta=0.1, freq=0.5, amp=1)
+    gp = GP(dt=0.0003, freq=0.5, amp=1)
+    gm = GM(dt=0.0003, eta=0.001, freq=0.5, amp=1)
 
     # %%
     data = []

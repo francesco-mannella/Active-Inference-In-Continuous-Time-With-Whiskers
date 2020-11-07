@@ -28,11 +28,13 @@ for type in ["normal", "large", "still"]:
 
     stime = 240000
 
-    gp = GP(dt=0.0003, freq=0.5, amp=1.2)
-    gm = GM(dt=0.0003, freq=0.5, amp=1.2)
+    gp = GP(dt=0.0004, freq=0.5, amp=1.2)
+    gm = GM(dt=0.0004, freq=0.5, amp=1.2)
 
-    sim = Sim("demo_"+type, points=normal_box
-              if type == "normal" or type == "still" else large_box)
+    points = (normal_box if type == "normal" or
+              type == "still" else large_box)
+    sim = Sim("demo_"+type, points=points)
+
     prederr = PredErrPlotter("prederr", type, stime)
     genProcPlot = Plotter("gen_proc_"+type, type="process",
                           wallcolor=[0.2, 0.2, 0, 0.2],
@@ -58,19 +60,18 @@ for type in ["normal", "large", "still"]:
 
         # compute box position
         if type == "normal" or type == "large":
-            box_pos = np.array([0,
-                                np.maximum(1.3, 2.2*np.exp(-3*t/stime)+0.7)])
+            box_pos = np.array([0, 1.3 + 1.6*np.exp(-3*t/stime)])
         else:
             box_pos = np.array([0, 5]) if t < stime*(36/100) \
                 else np.array([0, 1.48])
         sim.move_box(box_pos)
 
-        # compute collision
-        collision, curr_angle_limit = sim.detect_collision()
+        # move and conpute collision
+        collision, curr_angle_limit = sim.move_box(box_pos)
 
         # update process
-        gp.update(delta_action)
         gp.mu_x[2] = np.minimum(curr_angle_limit, gp.mu_x[2])
+        gp.update(delta_action)
 
         # get state
         sens[t] = gp.mu_x[2]
@@ -89,7 +90,6 @@ for type in ["normal", "large", "still"]:
 
             sim.set_box()
             sim.update(sens[t], sens_model[t])
-
 
             prederr.update([sens[t], sens_model[t]], t)
             genProcPlot.update([sens[t], ampl[t],

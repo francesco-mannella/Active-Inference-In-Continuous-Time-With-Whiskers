@@ -23,7 +23,6 @@ def ik_angle(origin, point):
         angle = np.arctan(aa)
     return angle
 
-
 class Sim:
 
     def __init__(self, name, points):
@@ -60,6 +59,7 @@ class Sim:
         self.angle = None
         self.box = None
         self.box_points_init = np.array(points)
+        self.box_points = self.box_points_init.copy()
         self.box_pos = 3
         self.move_box([0, self.box_pos])
         self.set_box()
@@ -70,6 +70,8 @@ class Sim:
 
     def move_box(self, pos):
         self.box_points = self.box_points_init + pos
+        collision, curr_angle_limit = self.detect_collision()
+        return collision, curr_angle_limit
 
     def set_box(self):
         if self.box is not None:
@@ -115,7 +117,7 @@ class Sim:
         curr_angle_limit = np.pi
         if in_collision_with_vertex:
 
-            if self.box_points[0][0] > self.whisker_vertices[1][0]:
+            if self.box_points[0][0] - 0.1 > self.whisker_vertices[1][0]:
                 angle_to_box_vertex = ik_angle(self.whisker_base,
                                                self.box_points[0])
                 angle_to_box_vertex = np.abs(angle_to_box_vertex +
@@ -123,7 +125,7 @@ class Sim:
                 curr_angle_limit = angle_to_box_vertex
             else:
                 box_height_whisk_angle = -np.arcsin(
-                    (box_height - self.whisker_base[1]) / self.whisker_len)
+                    (box_height - 0.1 - self.whisker_base[1]) / self.whisker_len)
                 box_height_whisk_angle = np.abs(
                     box_height_whisk_angle + self.whisker_base_angle)
                 curr_angle_limit = box_height_whisk_angle
