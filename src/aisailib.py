@@ -144,9 +144,9 @@ class GM:
         self.dmu_x[2] = self.mu_nu*self.mu_x[0] - self.mu_x[2]
 
         # update with gradients
-        self.mu_x += self.dt*(self.dmu_x
-            - self.eta * (self.gd_mu_x
-                          + self.eta*(self.gd_dmu_x)))
+        self.mu_x += self.dt*(self.dmu_x -
+                              self.eta * (self.gd_mu_x +
+                                          self.eta*(self.gd_dmu_x)))
 
         self.mu_nu += self.dt*self.gd_a
         return self.gd_a
