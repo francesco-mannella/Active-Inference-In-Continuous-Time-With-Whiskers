@@ -86,7 +86,7 @@ class GM:
     def __init__(self, dt=0.0005, eta=0.0005,
                  freq=0.001, amp=np.pi/2):
 
-        self.pi_s = 9
+        self.pi_s = np.array([9,9])
         self.pi_x = np.array([9,9,9])
         self.omega_s = p2std(self.pi_s)
         self.omega_x = p2std(self.pi_x)
@@ -106,7 +106,7 @@ class GM:
     def d_f_touch_dmu0(self, x, v):
         return -10*np.sech(10*x)*np.tanh(10*x)*(1/2 * np.tanh(10x-2) + 1/2)
 
-    def d_f_touch_dmu0(self, x, v):
+    def d_f_touch_dmu1(self, x, v):
         return np.sech(10v)*5*(np.sech(10*x-2))**2
 
     def update(self, sensory_states):
@@ -133,9 +133,10 @@ class GM:
 
         # TODO: gradient descent optimizations
         self.gd_mu_x = np.array([
-            -(1/omx[2])*n*(n*mx[0] - mx[2] - dmx[2]) -(1/omx[1])*(mx[0] + dmx[1]),
-            -(1/omx[0])*fr*(mx[1]*fr - dmx[0]),
-            (1/oms)*(s - mx[2]) - (1/omx[2])*(dmx[2] - (n*mx[0] - mx[2]))]) # tolto il quadrato su oms
+            -(1/omx[2])*n*(n*mx[0]-mx[2]-dmx[2]) - (1/omx[1])*(mx[0]+dmx[1]) + (1/oms[1])*(s[1]-f_touch(mx[0],mx[1]))*d_f_touch_dmu0(mx[0],mx[1]) ,
+            -(1/omx[0])*fr*(mx[1]*fr-dmx[0]) + (1/oms[1])*(s[1]-f_touch(mx[0],mx[1]))*d_f_touch_dmu1(mx[0],mx[1]),
+            (1/oms[0])*(s[0]-mx[2]) - (1/omx[2])*(dmx[2]-(n*mx[0]-mx[2]))
+            ])
 
         self.gd_dmu_x = np.array([
             -(1/omx[0])*(dmx[0] - fr*mx[1]),
@@ -143,7 +144,7 @@ class GM:
             -(1/omx[2])*(dmx[2] - (n*mx[0] - mx[2]))])
 
         self.gd_nu = -(1/omx[2])*mx[0]*(n*mx[0] - mx[2] - dmx[2])
-        self.gd_a = (1/oms)*da*(s - mx[2]) # tolto il quadrato su oms
+        self.gd_a = (1/oms[0])*da*(s[0] - mx[2]) 
 
         # classic Active inference internal variables dynamics
         eta_mu = self.eta
