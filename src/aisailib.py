@@ -36,11 +36,9 @@ class GP:
     def __init__(self, dt=0.0005, freq=0.01, amp=0.1):
 
         self.pi_s = 9
-        self.pi_x = 9
         self.mu_x = np.array([1.,0.,amp*1])
         self.mu_s = 1
         self.omega_s = p2std(self.pi_s)
-        self.omega_x = p2std(self.pi_x)
         self.dt = dt
         self.freq = freq
         self.a = amp
@@ -89,7 +87,9 @@ class GM:
                  freq=0.001, amp=np.pi/2):
 
         self.pi_s = 9
-        self.pi_x = 9
+        self.pi_x = np.array([9,9,9])
+        self.omega_s = p2std(self.pi_s)
+        self.omega_x = p2std(self.pi_x)
 
         self.mu_x = np.array([1.,0.,amp*1])
         self.dmu_x = np.array([0.,-1/freq,0.])
@@ -114,8 +114,6 @@ class GM:
         # update sensory states and dynamic precision
         self.s = sensory_states
         self.da = self.mu_x[0]
-        self.omega_s = p2std(self.pi_s)
-        self.omega_x = p2std(self.pi_x)
 
         s = self.s
         oms, omx = (self.omega_s, self.omega_x)
@@ -126,22 +124,24 @@ class GM:
 
         # TODO: gradient descent optimizations
         self.gd_mu_x = np.array([
-            -(1/omx)*(n*(n*mx[0] - mx[2] - dmx[2]) + (mx[0] + dmx[1])),
-            -(1/omx)*fr*(mx[1]*fr - dmx[0]),
-            (1/oms)*(s - mx[2]) - (1/omx)*(dmx[2] - (n*mx[0] - mx[2]))]) # tolto il quadrato su oms
+            -(1/omx[2])*n*(n*mx[0] - mx[2] - dmx[2]) -(1/omx[1])*(mx[0] + dmx[1]),
+            -(1/omx[0])*fr*(mx[1]*fr - dmx[0]),
+            (1/oms)*(s - mx[2]) - (1/omx[2])*(dmx[2] - (n*mx[0] - mx[2]))]) # tolto il quadrato su oms
 
         self.gd_dmu_x = np.array([
-            -(1/omx)*(dmx[0] - fr*mx[1]),
-            -(1/omx)*(mx[0] + dmx[1]),
-            -(1/omx)*(dmx[2] - (n*mx[0] - mx[2]))])
+            -(1/omx[0])*(dmx[0] - fr*mx[1]),
+            -(1/omx[1])*(mx[0] + dmx[1]),
+            -(1/omx[2])*(dmx[2] - (n*mx[0] - mx[2]))])
 
-        self.gd_nu = -(1/omx)*mx[0]*(n*mx[0] - mx[2] - dmx[2])
+        self.gd_nu = -(1/omx[2])*mx[0]*(n*mx[0] - mx[2] - dmx[2])
         self.gd_a = (1/oms)*da*(s - mx[2]) # tolto il quadrato su oms
 
         # classic Active inference internal variables dynamics
-        d_dmu_x = self.dt*( 10000*self.eta*self.gd_dmu_x )
-        self.mu_x += self.dt*( self.dmu_x + self.eta*self.gd_mu_x)
-        self.dmu_x += d_dmu_x #self.dt*( self.eta*self.gd_dmu_x )
+        eta_mu = self.eta
+        eta_dmu = 10000*self.eta
+        d_dmu_x = self.dt*( eta_dmu*self.gd_dmu_x )
+        self.mu_x += self.dt*( self.dmu_x + eta_mu*self.gd_mu_x)
+        self.dmu_x += d_dmu_x
 
 
         # dynamics of internal variables
@@ -156,8 +156,8 @@ class GM:
                                           self.eta*(self.gd_dmu_x)))
 
         """
-        self.nu += self.dt*self.gd_nu*self.eta*100*0
-        return self.gd_a*self.eta*0
+        self.nu += self.dt*self.gd_a
+        return self.gd_a
 
 
 if __name__ == "__main__":
