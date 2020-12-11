@@ -37,7 +37,7 @@ class GP:
 
         self.pi_s = 9
         self.pi_x = 9
-        self.mu_x = np.ones(3)
+        self.mu_x = np.array([1.,0.,amp*1])
         self.mu_s = 1
         self.omega_s = p2std(self.pi_s)
         self.omega_x = p2std(self.pi_x)
@@ -91,9 +91,9 @@ class GM:
         self.pi_s = 9
         self.pi_x = 9
 
-        self.mu_x = np.ones(3)
-        self.dmu_x = np.ones(3)
-        self.mu_nu = amp
+        self.mu_x = np.array([1.,0.,amp*1])
+        self.dmu_x = np.array([0.,-1/freq,0.])
+        self.nu = amp
 
         self.da = 1
         self.dt = dt
@@ -121,35 +121,43 @@ class GM:
         oms, omx = (self.omega_s, self.omega_x)
         mx = self.mu_x
         dmx = self.dmu_x
-        n = self.mu_nu
+        n = self.nu
         da, fr = self.da, self.freq
 
         # TODO: gradient descent optimizations
         self.gd_mu_x = np.array([
             -(1/omx)*(n*(n*mx[0] - mx[2] - dmx[2]) + (mx[0] + dmx[1])),
             -(1/omx)*fr*(mx[1]*fr - dmx[0]),
-            (1/oms**2)*(s - mx[2]) - (1/omx)*(dmx[2] - (n*mx[0] - mx[2]))])
+            (1/oms)*(s - mx[2]) - (1/omx)*(dmx[2] - (n*mx[0] - mx[2]))]) # tolto il quadrato su oms
 
         self.gd_dmu_x = np.array([
             -(1/omx)*(dmx[0] - fr*mx[1]),
             -(1/omx)*(mx[0] + dmx[1]),
             -(1/omx)*(dmx[2] - (n*mx[0] - mx[2]))])
 
-        self.gd_mu_nu = -(1/omx)*mx[0]*(n*mx[0] - mx[2] - dmx[2])
-        self.gd_a = (1/oms**2)*da*(s - mx[2])
+        self.gd_nu = -(1/omx)*mx[0]*(n*mx[0] - mx[2] - dmx[2])
+        self.gd_a = (1/oms)*da*(s - mx[2]) # tolto il quadrato su oms
+
+        # classic Active inference internal variables dynamics
+        d_dmu_x = self.dt*( 10000*self.eta*self.gd_dmu_x )
+        self.mu_x += self.dt*( self.dmu_x + self.eta*self.gd_mu_x)
+        self.dmu_x += d_dmu_x #self.dt*( self.eta*self.gd_dmu_x )
+
 
         # dynamics of internal variables
+        """
         self.dmu_x[0] = self.freq*self.mu_x[1]
         self.dmu_x[1] = -self.mu_x[0]
-        self.dmu_x[2] = self.mu_nu*self.mu_x[0] - self.mu_x[2]
+        self.dmu_x[2] = self.nu*self.mu_x[0] - self.mu_x[2]
 
         # update with gradients
-        self.mu_x += self.dt*(self.dmu_x -
+        self.mu_x += self.dt*(self.dmu_x +  # cambiato questo segno
                               self.eta * (self.gd_mu_x +
                                           self.eta*(self.gd_dmu_x)))
 
-        self.mu_nu += self.dt*self.gd_a
-        return self.gd_a
+        """
+        self.nu += self.dt*self.gd_nu*self.eta*100*0
+        return self.gd_a*self.eta*0
 
 
 if __name__ == "__main__":
@@ -165,7 +173,7 @@ if __name__ == "__main__":
         if t > 30000:
             gp.mu_x[2] = np.minimum(0.5, gp.mu_x[2])
         gp.update(a)
-        s, gpm, gmm, gpa, gmn = gp.s, gp.mu_x[2], gm.mu_x[2], gp.a, gm.mu_nu
+        s, gpm, gmm, gpa, gmn = gp.s, gp.mu_x[2], gm.mu_x[2], gp.a, gm.nu
         a = gm.update(s)
         data.append([s, gpm, gmm, gpa, gmn])
     data = np.vstack(data)
@@ -180,3 +188,5 @@ if __name__ == "__main__":
     plt.plot(data[:, 2], c="green", lw=1, ls="dashed")
     plt.plot(data[:, 4], c="#66aa66", lw=3)
     plt.show()
+
+    #print(gm.omega_s)
