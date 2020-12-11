@@ -100,6 +100,15 @@ class GM:
         self.eta = eta
         self.freq = freq
 
+    def f_touch(self, x, v):
+        return np.sech(10v)*(1/2 * np.tanh(10x-2) + 1/2)
+
+    def d_f_touch_dmu0(self, x, v):
+        return -10*np.sech(10*x)*np.tanh(10*x)*(1/2 * np.tanh(10x-2) + 1/2)
+
+    def d_f_touch_dmu0(self, x, v):
+        return np.sech(10v)*5*(np.sech(10*x-2))**2
+
     def update(self, sensory_states):
         """ Update dynamics and give action
 
@@ -144,18 +153,6 @@ class GM:
         self.dmu_x += d_dmu_x
 
 
-        # dynamics of internal variables
-        """
-        self.dmu_x[0] = self.freq*self.mu_x[1]
-        self.dmu_x[1] = -self.mu_x[0]
-        self.dmu_x[2] = self.nu*self.mu_x[0] - self.mu_x[2]
-
-        # update with gradients
-        self.mu_x += self.dt*(self.dmu_x +  # cambiato questo segno
-                              self.eta * (self.gd_mu_x +
-                                          self.eta*(self.gd_dmu_x)))
-
-        """
         self.nu += self.dt*self.gd_a
         return self.gd_a
 
@@ -188,5 +185,3 @@ if __name__ == "__main__":
     plt.plot(data[:, 2], c="green", lw=1, ls="dashed")
     plt.plot(data[:, 4], c="#66aa66", lw=3)
     plt.show()
-
-    #print(gm.omega_s)
