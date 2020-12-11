@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from mpmath import sech, tanh
 rng = np.random.RandomState()
 
 
@@ -101,13 +102,13 @@ class GM:
         self.freq = freq
 
     def f_touch(self, x, v):
-        return np.sech(10v)*(1/2 * np.tanh(10x-2) + 1/2)
+        return sech(10*v)*(1/2 * tanh(10*x-2) + 1/2)
 
     def d_f_touch_dmu0(self, x, v):
-        return -10*np.sech(10*x)*np.tanh(10*x)*(1/2 * np.tanh(10x-2) + 1/2)
+        return -10*sech(10*x)*tanh(10*x)*(1/2 * tanh(10*x-2) + 1/2)
 
     def d_f_touch_dmu1(self, x, v):
-        return np.sech(10v)*5*(np.sech(10*x-2))**2
+        return sech(10*v)*5*(sech(10*x-2))**2
 
     def update(self, sensory_states):
         """ Update dynamics and give action
@@ -133,8 +134,8 @@ class GM:
 
         # TODO: gradient descent optimizations
         self.gd_mu_x = np.array([
-            -(1/omx[2])*n*(n*mx[0]-mx[2]-dmx[2]) - (1/omx[1])*(mx[0]+dmx[1]) + (1/oms[1])*(s[1]-f_touch(mx[0],mx[1]))*d_f_touch_dmu0(mx[0],mx[1]) ,
-            -(1/omx[0])*fr*(mx[1]*fr-dmx[0]) + (1/oms[1])*(s[1]-f_touch(mx[0],mx[1]))*d_f_touch_dmu1(mx[0],mx[1]),
+            -(1/omx[2])*n*(n*mx[0]-mx[2]-dmx[2]) - (1/omx[1])*(mx[0]+dmx[1]) + (1/oms[1])*(s[1]-self.f_touch(mx[0],mx[1]))*self.d_f_touch_dmu0(mx[0],mx[1]) ,
+            -(1/omx[0])*fr*(mx[1]*fr-dmx[0]) + (1/oms[1])*(s[1]-self.f_touch(mx[0],mx[1]))*self.d_f_touch_dmu1(mx[0],mx[1]),
             (1/oms[0])*(s[0]-mx[2]) - (1/omx[2])*(dmx[2]-(n*mx[0]-mx[2]))
             ])
 
@@ -144,14 +145,14 @@ class GM:
             -(1/omx[2])*(dmx[2] - (n*mx[0] - mx[2]))])
 
         self.gd_nu = -(1/omx[2])*mx[0]*(n*mx[0] - mx[2] - dmx[2])
-        self.gd_a = (1/oms[0])*da*(s[0] - mx[2]) 
+        self.gd_a = (1/oms[0])*da*(s[0]-mx[2]) - (1/oms[1])*(s[1]-self.f_touch(mx[0],mx[1]))*da
 
         # classic Active inference internal variables dynamics
         eta_mu = self.eta
         eta_dmu = 10000*self.eta
         d_dmu_x = self.dt*( eta_dmu*self.gd_dmu_x )
-        self.mu_x += self.dt*( self.dmu_x + eta_mu*self.gd_mu_x)
-        self.dmu_x += d_dmu_x
+        self.mu_x = self.mu_x + self.dt*( self.dmu_x + eta_mu*self.gd_mu_x)
+        self.dmu_x = self.dmu_x + d_dmu_x
 
 
         self.nu += self.dt*self.gd_a
@@ -168,11 +169,13 @@ if __name__ == "__main__":
     a = 0.0
     stime = 200000
     for t in range(stime):
+        touch = 0.
         if t > 30000:
             gp.mu_x[2] = np.minimum(0.5, gp.mu_x[2])
+            touch = 1.
         gp.update(a)
         s, gpm, gmm, gpa, gmn = gp.s, gp.mu_x[2], gm.mu_x[2], gp.a, gm.nu
-        a = gm.update(s)
+        a = gm.update( [s,touch] )
         data.append([s, gpm, gmm, gpa, gmn])
     data = np.vstack(data)
 
