@@ -166,13 +166,17 @@ if __name__ == "__main__":
 
     # %%
     data = []
+    platform = []
     a = 0.0
     stime = 200000
     for t in range(stime):
         touch = 0.
-        if t > 30000:
-            gp.mu_x[2] = np.minimum(0.5, gp.mu_x[2])
-            touch = 1.
+        if t > 30000 and t<150000:
+            if gp.mu_x[2]>0.5:
+                touch = 1.
+                gp.mu_x[2] = 0.5
+                platform.append([t,0.5])
+
         gp.update(a)
         s, gpm, gmm, gpa, gmn = gp.s, gp.mu_x[2], gm.mu_x[2], gp.a, gm.nu
         a = gm.update( [s,touch] )
@@ -180,12 +184,14 @@ if __name__ == "__main__":
     data = np.vstack(data)
 
     # %%
-
+    platform = np.vstack(platform)
     plt.figure(figsize=(10, 6))
     plt.subplot(211)
     plt.plot(data[:, 1], c="red", lw=1, ls="dashed")
     plt.plot(data[:, 3], c="#aa6666", lw=3)
+    plt.plot(platform[:,0], platform[:,1], c="black", lw=0.5)
     plt.subplot(212)
     plt.plot(data[:, 2], c="green", lw=1, ls="dashed")
     plt.plot(data[:, 4], c="#66aa66", lw=3)
+    plt.plot(platform[:,0], platform[:,1], c="black", lw=0.5)
     plt.show()
