@@ -83,7 +83,7 @@ class GM:
 
     """
 
-    def __init__(self, dt=0.0005, eta=0.0005,
+    def __init__(self, dt=0.0005, eta=0.0005, eta_d=1000,
                  freq=0.001, amp=np.pi/2):
 
         self.pi_s = 9
@@ -98,6 +98,7 @@ class GM:
         self.da = 1
         self.dt = dt
         self.eta = eta
+        self.eta_d = eta_d
         self.freq = freq
 
     def update(self, sensory_states):
@@ -138,24 +139,12 @@ class GM:
 
         # classic Active inference internal variables dynamics
         eta_mu = self.eta
-        eta_dmu = 10000*self.eta
+        eta_dmu = self.eta_d
         d_dmu_x = self.dt*( eta_dmu*self.gd_dmu_x )
-        self.mu_x += self.dt*( self.dmu_x + eta_mu*self.gd_mu_x)
-        self.dmu_x += d_dmu_x
+        self.mu_x = self.mu_x + self.dt*( self.dmu_x + eta_mu*self.gd_mu_x)
+        self.dmu_x = self.dmu_x + d_dmu_x
 
 
-        # dynamics of internal variables
-        """
-        self.dmu_x[0] = self.freq*self.mu_x[1]
-        self.dmu_x[1] = -self.mu_x[0]
-        self.dmu_x[2] = self.nu*self.mu_x[0] - self.mu_x[2]
-
-        # update with gradients
-        self.mu_x += self.dt*(self.dmu_x +  # cambiato questo segno
-                              self.eta * (self.gd_mu_x +
-                                          self.eta*(self.gd_dmu_x)))
-
-        """
         self.nu += self.dt*self.gd_a
         return self.gd_a
 

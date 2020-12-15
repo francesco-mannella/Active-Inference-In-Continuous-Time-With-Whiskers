@@ -69,7 +69,9 @@ for type in ["normal", "attenuation"]:
             dd = np.sum(2*(sens[t-1:t+1] > 0)-1)
             if dd == 0 and sens[t-1] > 0:
                 peaks += 1
-                if peaks == peaks_max+1:
+                if peaks
+
+                 == peaks_max+1:
                     box_time = t + stime//6
         if t % 1200 == 0 or t == stime - 1:
             if t > box_time:
