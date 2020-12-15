@@ -61,7 +61,7 @@ class GP:
 
         return self.s
 
-
+a_touch = 10.0
 class GM:
     """ Generative Model.
 
@@ -84,7 +84,7 @@ class GM:
 
     """
 
-    def __init__(self, dt=0.0005, eta=0.0005,
+    def __init__(self, dt=0.0005, eta=0.0005, eta_d=1000,
                  freq=0.001, amp=np.pi/2):
 
         self.pi_s = np.array([9,9])
@@ -99,16 +99,17 @@ class GM:
         self.da = 1
         self.dt = dt
         self.eta = eta
+        self.eta_d = eta_d
         self.freq = freq
 
     def f_touch(self, x, v):
-        return sech(10*v)*(1/2 * tanh(10*x-2) + 1/2)
+        return sech(a_touch*v)*(1/2 * tanh(a_touch*x-2) + 1/2)
 
     def d_f_touch_dmu0(self, x, v):
-        return -10*sech(10*x)*tanh(10*x)*(1/2 * tanh(10*x-2) + 1/2)
+        return -a_touch*sech(a_touch*x)*tanh(a_touch*x)*(1/2 * tanh(a_touch*x-2) + 1/2)
 
     def d_f_touch_dmu1(self, x, v):
-        return sech(10*v)*5*(sech(10*x-2))**2
+        return sech(a_touch*v)*5*(sech(a_touch*x-2))**2
 
     def update(self, sensory_states):
         """ Update dynamics and give action
@@ -144,12 +145,13 @@ class GM:
             -(1/omx[1])*(mx[0] + dmx[1]),
             -(1/omx[2])*(dmx[2] - (n*mx[0] - mx[2]))])
 
+        self.touch = self.f_touch(mx[0],mx[1])
         self.gd_nu = -(1/omx[2])*mx[0]*(n*mx[0] - mx[2] - dmx[2])
         self.gd_a = (1/oms[0])*da*(s[0]-mx[2]) - (1/oms[1])*(s[1]-self.f_touch(mx[0],mx[1]))*da
 
         # classic Active inference internal variables dynamics
         eta_mu = self.eta
-        eta_dmu = 10000*self.eta
+        eta_dmu = self.eta_d
         d_dmu_x = self.dt*( eta_dmu*self.gd_dmu_x )
         self.mu_x = self.mu_x + self.dt*( self.dmu_x + eta_mu*self.gd_mu_x)
         self.dmu_x = self.dmu_x + d_dmu_x

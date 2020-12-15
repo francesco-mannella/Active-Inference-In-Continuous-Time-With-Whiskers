@@ -25,7 +25,7 @@ def g(x):
 
 
 def f(x, a, freq=fr):
-    W = Matrix(3, 1,
+    W = Matrix(3, 3,
                [0,       freq,  0,
                -1,          0,     0,
                 a,          0,    -1])
@@ -40,7 +40,7 @@ def normal1d(x, m, S):
 
 def normal(x, m, S):
     n = exp(-0.5*(x - m).T * inv(S) * (x - m)) \
-        / sqrt(S.norm()*((2*pi)**2))
+        / sqrt(S.det()*((2*pi)**2))
     return n
 
 
