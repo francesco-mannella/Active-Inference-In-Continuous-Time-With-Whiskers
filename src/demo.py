@@ -1,6 +1,7 @@
 from plotter import Plotter, PredErrPlotter
 from sim import Sim, a2xy
-from aisailib import GP, GM
+from GP import GP
+from GM import GM
 import numpy as np
 
 
@@ -26,10 +27,10 @@ for type in ["still"]:
 
     print("simulating", type, "...")
 
-    stime = 200000
+    stime = 2000000
 
-    gp = GP(dt=0.0005, freq=0.5, amp=1.2)
-    gm = GM(dt=0.0005, eta=0.001, eta_d=1800, freq=0.5, amp=1.2)
+    gp = GP(dt=0.005, omega2_GP=0.5, alpha=[1., 1.])
+    gm = GM(dt=0.005,  eta=0.001, eta_d=1., eta_a=0.06, eta_nu=0.0)
 
     points = (normal_box if type == "normal" or
               type == "still" else large_box)
@@ -48,7 +49,7 @@ for type in ["still"]:
                                  "nu": "internal cause (repr. oscill. ampl.)"},
                          color=[.2, .5, 0], stime=stime)
 
-    delta_action = 0
+    delta_action = 1.0*np.zeros(2)
 
     sens = np.zeros(stime)
     ampl = np.zeros(stime)
@@ -82,20 +83,20 @@ for type in ["still"]:
         collision, curr_angle_limit = sim.move_box(box_pos)
 
         # update process
-        gp.mu_x[2] = np.minimum(curr_angle_limit, gp.mu_x[2])
+        gp.effective_object_position[0] = curr_angle_limit
         gp.update(delta_action)
 
         # get state
-        sens[t] = gp.mu_x[2]
-        sens_model[t] = gm.mu_x[2]
-        ampl[t] = gp.a
-        ampl_model[t] = gm.nu
-        current_touch += 0.03*(collision - current_touch)
+        sens[t] = gp.x[0]
+        sens_model[t] = gm.mu[0]
+        ampl[t] = gp.a[0]
+        ampl_model[t] = gm.nu[0]
+        current_touch = gp.s_t[0]
 
         # update model and action
-        delta_action = gm.update([sens[t], current_touch])
+        delta_action = gm.update(gp.s_t[0], gp.s_p[0], gp.x[0])
 
-        touch[t] = gm.touch
+        touch[t] = gm.touch_pred[0]
 
         # plot
         if t % int(stime/200) == 0 or t == stime - 1:

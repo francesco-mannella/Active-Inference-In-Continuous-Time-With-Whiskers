@@ -3,7 +3,10 @@ import numpy as np
 
 class GP:
 
-    def __init__(self, dt, omega2_GP=0.5, alpha=[1.,1.]):
+    def __init__(self, dt, omega2_GP=0.5, alpha=[1., 1.], rng=None):
+
+        if rng is None:
+            self.rng = np.random.RandomState()
 
         # Harmonic oscillator angular frequency (both x_0 and x_2)
         self.omega2 = omega2_GP
@@ -29,6 +32,7 @@ class GP:
         self.object_interval = [25, 90]
         # Object position (when is present)
         self.object_position = np.array([0.5, 0.5])
+        self.effective_object_position = np.zeros(len(self.a))
 
     # Function that regulates object position
     def obj_pos(self, t, obj_interval):
@@ -37,10 +41,10 @@ class GP:
         else:
             return np.array([10., 10.])
 
-
     # Discrete function that return if a whisker has touched
+
     def touch(self, x, object):
-        if x>=object:
+        if x >= object:
             return 1.
         else:
             return 0.
@@ -63,14 +67,13 @@ class GP:
         self.cpg[1] += self.dt*(-self.omega2*self.cpg[0])
         self.x += self.dt*(self.a*self.cpg[0] - self.x)
 
-
         # object Action on touch sensory inputs
         for i in range(len(self.x)):
-            self.effective_object_position = self.obj_pos(self.t, self.object_interval)
-            self.s_t[i] = self.touch_cont(self.x[i], self.effective_object_position[i]) + self.Sigma_s_t[i]*rng.randn()
+            self.s_t[i] = self.touch_cont(
+                self.x[i], self.effective_object_position[i]) + self.Sigma_s_t[i]*self.rng.randn()
             if self.x[i] > self.effective_object_position[i]:
                 self.x[i] = min(self.x[i], self.effective_object_position[i])
-                self.s_p[i] = 0 # self.a[i]*self.cpg[0] - self.x[i]
+                self.s_p[i] = 0  # self.a[i]*self.cpg[0] - self.x[i]
             else:
                 self.s_p[i] = self.a[i]*self.cpg[0] - self.x[i]
-            self.s_p[i] += self.Sigma_s_p[i]*rng.randn()
+            self.s_p[i] += self.Sigma_s_p[i]*self.rng.randn()

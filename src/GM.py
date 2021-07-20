@@ -1,5 +1,6 @@
 
-inport numpy as np
+import numpy as np
+
 
 class GM:
 
@@ -14,9 +15,9 @@ class GM:
         # Variances (inverse of precisions) of sensory proprioceptive inputs
         self.Sigma_s_p = np.ones(len(nu))*0.01
         # Variances (inverse of precisions) of sensory touch inputs
-        self.Sigma_s_t = np.ones(len(nu))*0.032 #np.array(Sigma_s_t)
+        self.Sigma_s_t = np.ones(len(nu))*0.032  # np.array(Sigma_s_t)
         # Internal variables precisions
-        self.Sigma_mu = np.ones(len(nu))*0.01 #np.array(Sigma_mu)
+        self.Sigma_mu = np.ones(len(nu))*0.01  # np.array(Sigma_mu)
 
         # Action variable (in this case the action is intended as the increment of the variable that the agent is allowed to modified)
         self.da = 0.
@@ -40,30 +41,32 @@ class GM:
     def dg_dx(self, x, v, prec=50):
         return 1/np.cosh(prec*v)*0.5*prec*(1/np.cosh(prec*x))**2
 
-
     # Function that implement the update of internal variables.
+
     def update(self, touch_sensory_states, proprioceptive_sensory_states, x):
         # touch_sensory_states  and proprioceptive_sensory_states arguments come from GP (both arrays have dimension equal to the number of whiskers)
         # Returns action increment
 
-
         self.s_p = proprioceptive_sensory_states
         self.s_t = touch_sensory_states
+        self.touch_pred = self.g_touch(x=self.mu, v=self.dmu)
 
         self.PE_mu = self.dmu - (self.nu*x - self.mu)
         self.PE_s_p = self.s_p-self.dmu
-        self.PE_s_t = self.s_t-self.g_touch(x=self.mu, v=self.dmu)
+        self.PE_s_t = self.s_t-self.touch_pred
 
         self.dF_dmu = self.PE_mu/self.Sigma_mu \
-                    - self.dg_dx(x=self.mu, v=self.dmu)*self.PE_s_t/self.Sigma_s_t
+            - self.dg_dx(x=self.mu, v=self.dmu)*self.PE_s_t/self.Sigma_s_t
 
         self.dF_d_dmu = self.PE_mu/self.Sigma_mu \
-                        - self.PE_s_p/self.Sigma_s_p \
-                        - self.dg_dv(x=self.mu, v=self.dmu)*self.PE_s_t/self.Sigma_s_t
+            - self.PE_s_p/self.Sigma_s_p \
+            - self.dg_dv(x=self.mu, v=self.dmu) * \
+            self.PE_s_t/self.Sigma_s_t
 
         # Action update
         # case with dg/da = 1
-        self.da = -self.dt*self.eta_a*( x*self.PE_s_p/self.Sigma_s_p + self.PE_s_t/self.Sigma_s_t )
+        self.da = -self.dt*self.eta_a * \
+            (x*self.PE_s_p/self.Sigma_s_p + self.PE_s_t/self.Sigma_s_t)
 
         # Learning internal parameter nu
         self.nu += -self.dt*self.eta_nu*(-x*self.PE_mu/self.Sigma_mu)
