@@ -1,4 +1,5 @@
 
+inport numpy as np
 
 class GM:
 
