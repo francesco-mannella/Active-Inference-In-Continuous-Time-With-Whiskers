@@ -2,10 +2,74 @@ from mkvideo import vidManager
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
+import matplotlib.patches as mpatches
+import sys
 Path = mpath.Path
 
 
-class Plotter:
+class SimPlotter:
+
+    def __init__(self, sim):
+        self.sim = sim
+        self.fig = plt.figure(figsize=(5, 5))
+        self.vm = vidManager(self.fig, name=sim.name,
+                             dirname=sim.name, duration=0.1)
+        self.ax = self.fig.add_subplot(111, aspect="equal")
+
+        head_shape = mpatches.PathPatch(
+            Path(np.vstack([sim.head_points, (0, 0)]),
+                 [Path.MOVETO, Path.CURVE3, Path.CURVE3, Path.CLOSEPOLY]),
+            fc="none", transform=self.ax.transData)
+        self.head = self.ax.add_patch(head_shape)
+        self.head.set_facecolor([0.8, 0.8, 0.8])
+
+        self.whisker, = self.ax.plot(0, 0, c="k", lw=5)
+        self.set_whisker()
+        self.ax.set_xlim([-2, 2])
+        self.ax.set_ylim([-0.8, 2.5])
+
+        self.whisker_model, = self.ax.plot(0, 0, c="g", lw=5, alpha=0.5)
+        self.set_whisker_model()
+        self.ax.set_xlim([-2, 2])
+        self.ax.set_ylim([-0.8, 2.5])
+
+        self.box = None
+        self.set_box()
+
+        self.ax.set_xticks([])
+        self.ax.set_yticks([])
+        self.fig.tight_layout()
+
+    def set_box(self):
+        if self.box is not None:
+            self.box.remove()
+        box_shape = mpatches.PathPatch(
+            Path(np.vstack([self.sim.box_points, (0, 0)]),
+                 [Path.MOVETO, Path.LINETO,
+                  Path.LINETO, Path.LINETO,
+                  Path.CLOSEPOLY]),
+            fc="none", transform=self.ax.transData)
+        self.box = self.ax.add_patch(box_shape)
+        self.box.set_facecolor([0.9, 0.9, 0.9])
+
+    def set_whisker(self):
+        self.whisker.set_data(*self.sim.whisker_vertices.T)
+
+    def set_whisker_model(self):
+        self.whisker_model.set_data(*self.sim.whisker_model_vertices.T)
+
+    def update(self):
+        self.set_box()
+        self.set_whisker()
+        self.set_whisker_model()
+        self.fig.canvas.draw()
+        self.vm.save_frame()
+
+    def close(self):
+        self.vm.mk_video()
+
+
+class SeriesPlotter:
 
     def __init__(self, name, type, labels, wallcolor, color, stime):
         self.fig = plt.figure(figsize=(5, 2.5))
@@ -40,8 +104,7 @@ class Plotter:
         self.x_array.append(s)
         self.sigma_array.append(o)
         self.nu_array.append(a)
-        if w is True:
-            self.wall_array.append(t)
+        self.wall_array.append(w)
         self.T.append(t)
         if self.sigma_fill is not None:
             self.sigma_fill.remove()
@@ -58,7 +121,7 @@ class Plotter:
         self.x_head.set_offsets([[t, self.x_array[-1]]])
         self.nu.set_data(self.T, self.nu_array)
         self.nu_head.set_offsets([[t, self.nu_array[-1]]])
-        self.wall.set_data(self.wall_array, 0.5*np.ones_like(self.wall_array))
+        self.wall.set_data(self.T, self.wall_array)
         self.fig.canvas.draw()
         self.vm.save_frame()
 
@@ -91,7 +154,8 @@ class PredErrPlotter:
         self.pe_head = self.ax.scatter(0, 0, c="k", s=60)
         self.ax.set_xlim([-0.1*stime, stime*1.1])
         self.ax.set_ylim([-0.2, 0.5])
-        self.ax.set_yticks([-1, 0, 1])
+        self.ax.set_yticks([-0.1, 0, 0.5])
+        self.ax.set_yticklabels(["-.1", "0", ".5"])
         self.ax.set_xticks([])
         self.pe_array = []
         self.T = []
@@ -106,3 +170,59 @@ class PredErrPlotter:
         self.pe_head.set_offsets([[self.T[-1], self.pe_array[-1]]])
         self.fig.canvas.draw()
         self.vm.save_frame()
+
+
+class Plotter:
+
+    def __init__(self, sim, stime, type):
+        self.stime = stime
+        self.type = type
+        self.prederr = PredErrPlotter("prederr", self.type, self.stime)
+        self.genProcPlot = SeriesPlotter("gen_proc_" + self.type, type="process",
+                                         wallcolor=[0.2, 0.2, 0, 0.2],
+                                         labels={"x": "proprioception",
+                                                 "nu": "action (oscil. ampl.)"},
+                                         color=[.5, .2, 0], stime=self.stime)
+
+        self.genModPlot = SeriesPlotter("gen_mod_"+self.type, type="model",
+                                        wallcolor=[0, 0, 0, 0],
+                                        labels={"x": "proprioception prediction",
+                                                "nu": "internal cause (repr. oscill. ampl.)"},
+                                        color=[.2, .5, 0], stime=self.stime)
+
+        self.simPlot = SimPlotter(sim)
+        self.sens = np.zeros(stime)
+        self.sens_model = np.zeros(stime)
+        self.ampl = np.zeros(stime)
+        self.ampl_model = np.zeros(stime)
+        self.touch = np.zeros(stime)
+        self.current_touch = 0
+        self.limit = 1000
+
+    def update(self, t, gm, gp, limit, collision):
+
+        # get state
+        self.t = t
+        self.sens[t] = gp.x[0]
+        self.sens_model[t] = gm.mu[0]
+        self.ampl[t] = gp.a[0]
+        self.ampl_model[t] = gm.nu[0]
+        self.current_touch = gp.s_t[0]
+        self.touch[t] = gm.touch_pred[0]
+        self.imit = limit
+        self.collision = collision
+
+    def draw(self):
+        t = self.t
+        self.prederr.update([self.sens[t], self.sens_model[t]], t)
+        self.genProcPlot.update([self.sens[t], self.ampl[t],
+                                 self.limit if self.collision
+                                 is True else None, 0], t)
+        self.genModPlot.update([self.sens_model[t], self.ampl_model[t],
+                                self.limit if self.collision
+                                is True else None, 0], t)
+        self.simPlot.update()
+
+    def close(self):
+        self.simPlot.close()
+        np.savetxt(self.type+"_touch", self.touch)
