@@ -7,7 +7,7 @@
 
 <img src="pics/gp_eq.jpg" width="500em"/><br>
 
-**The generative model** The generative model gives predictions about touch events and changes in whisker position. the internl variable **x** models the scaled oscillator. The internal cause **v** defines the internal prior about the parameter α in the process.  The input from the oscillator itself stands for a prediction of this signal by a further internal variable with an infinitly precise conditional density.
+**The generative model** gives predictions about touch events and changes in whisker position. the internl variable **x** models the scaled oscillator. The internal cause **v** defines the internal prior about the parameter α in the process.  The input from the oscillator itself stands for a prediction of this signal by a further internal variable with an infinitly precise conditional density.
 
 
 <img src="pics/model.svg" width="500em"/>
