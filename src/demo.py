@@ -20,7 +20,7 @@ stime = 20000
 gp = GP(dt=0.01, omega2_GP=(0.5**2), alpha=[1., 1.])
 gm = GM(dt=0.01, eta=0.001,
         eta_d=1.0, eta_a=0.01, eta_nu=0.002)
-sim = Sim("demo_"+type, type, stime)
+sim = Sim("demo_" + type, type, stime)
 plotter = Plotter(sim, stime, type)
 
 delta_action = np.zeros(2)
@@ -36,14 +36,14 @@ for t in range(stime):
     gp.effective_object_position[0] = curr_angle_limit
     gp.update(delta_action)
 
-    #update model
+    # update model
     delta_action = gm.update(gp.s_t[0], gp.s_p[0], gp.cpg[0])
 
     # update data
     plotter.update(t, gm, gp, curr_angle_limit, collision)
 
     # plot
-    if t % int(stime/200) == 0 or t == stime - 1:
+    if t % int(stime / 200) == 0 or t == stime - 1:
 
         print(frame)
         frame += 1
